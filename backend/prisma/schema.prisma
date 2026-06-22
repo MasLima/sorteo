@@ -1,0 +1,152 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RaffleStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum TicketStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  phone        String?
+  isActive     Boolean  @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  roleId String
+  role   Role   @relation(fields: [roleId], references: [id])
+
+  createdRaffles Raffle[]
+  registeredTickets Ticket[]
+  registeredWinners  Winner[]
+}
+
+model Role {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+
+  users       User[]
+  permissions RolePermission[]
+}
+
+model Permission {
+  id   String @id @default(uuid())
+  name String @unique
+
+  roles RolePermission[]
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  role         Role       @relation(fields: [roleId], references: [id])
+  permission   Permission @relation(fields: [permissionId], references: [id])
+
+  @@id([roleId, permissionId])
+}
+
+model Raffle {
+  id          String       @id @default(uuid())
+  title       String
+  description String?
+  status      RaffleStatus @default(ACTIVE)
+  ticketPrice Float
+  maxTickets  Int?
+  startDate   DateTime     @default(now())
+  endDate     DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  createdById String
+  createdBy   User @relation(fields: [createdById], references: [id])
+
+  tickets Ticket[]
+  winner  Winner?
+}
+
+model Participant {
+  id        String   @id @default(uuid())
+  name      String
+  phone     String
+  email     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tickets Ticket[]
+  winner  Winner?
+
+  @@unique([name, phone])
+}
+
+model Ticket {
+  id            String       @id @default(uuid())
+  ticketNumber  Int
+  status        TicketStatus @default(PENDING)
+  paymentAmount Float
+  paymentProof  String?
+  paymentNote   String?
+  assignedAt    DateTime     @default(now())
+  confirmedAt   DateTime?
+
+  raffleId      String
+  participantId String
+  registeredById String?
+
+  raffle        Raffle      @relation(fields: [raffleId], references: [id])
+  participant   Participant @relation(fields: [participantId], references: [id])
+  registeredBy  User?       @relation(fields: [registeredById], references: [id])
+  winner        Winner?
+
+  @@unique([raffleId, ticketNumber])
+}
+
+model Winner {
+  id            String   @id @default(uuid())
+  prize         String?
+  announcedAt   DateTime @default(now())
+
+  raffleId      String   @unique
+  ticketId      String   @unique
+  participantId String   @unique
+  registeredById String?
+
+  raffle       Raffle      @relation(fields: [raffleId], references: [id])
+  ticket       Ticket      @relation(fields: [ticketId], references: [id])
+  participant  Participant @relation(fields: [participantId], references: [id])
+  registeredBy User?       @relation(fields: [registeredById], references: [id])
+}
+
+model NotificationLog {
+  id        String   @id @default(uuid())
+  type      String
+  to        String
+  message   String
+  status    String
+  error     String?
+  sentAt    DateTime @default(now())
+
+  raffleId  String?
+  ticketId  String?
+  userId    String?
+
+  @@index([raffleId])
+  @@index([ticketId])
+}
