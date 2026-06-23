@@ -1,20 +1,22 @@
 # Deploy - Guía paso a paso
 
-## 1. Backend en Koyeb (gratis, nunca se duerme)
+## 1. Backend en Render (gratis, no pide tarjeta)
 
 ### 1.1 Crear cuenta
-- Ir a https://app.koyeb.com → Sign up (GitHub)
+- Ir a https://render.com → Sign up (GitHub)
 - Conectar con GitHub
+- **Importante:** NO pide tarjeta de crédito para el free tier
 
-### 1.2 Crear App
-- Click **Create App**
-- **GitHub** → seleccionar `MasLima/sorteo`
-- En **Builder**: seleccionar **Dockerfile**
+### 1.2 Crear Web Service
+- Click **New +** → **Web Service**
+- Conectar GitHub → seleccionar `MasLima/sorteo`
 - En **Settings**:
-  - **App name**: `sorteo-api`
-  - **Public port**: 3000
+  - **Name**: `sorteo-api`
+  - **Runtime**: `Node`
+  - **Build Command**: `npm install && npx prisma generate && npm run build`
+  - **Start Command**: `npm start`
 
-### 1.3 Variables de entorno (Environment variables)
+### 1.3 Variables de entorno (Environment Variables)
 Agregar estas:
 
 | Variable | Valor |
@@ -22,19 +24,21 @@ Agregar estas:
 | `DATABASE_URL` | `postgresql://postgres:dOusEb4aDNxrEbdq@db.jmrjimmjpsjqzflxdiaq.supabase.co:5432/postgres?schema=public` |
 | `JWT_SECRET` | `9095cb380f035b754885f3208d21c201af8d51064fc2effa98a0a8fa57dd38b1` |
 | `FRONTEND_URL` | (poner luego de desplegar frontend) |
-| `PORT` | `3000` |
+| `PORT` | `10000` |
 
 TWILIO y CLOUDINARY son opcionales, dejarlos vacíos por ahora.
 
 ### 1.4 Deploy
-- Click **Create App**
+- Click **Create Web Service**
 - Esperar ~3-5 minutos
-- Koyeb te dará una URL: `https://sorteo-api-[hash].koyeb.app`
+- Render te dará una URL: `https://sorteo-api.onrender.com`
 
 ### 1.5 Verificar
 ```
-curl https://sorteo-api-[hash].koyeb.app/api/health
+curl https://sorteo-api.onrender.com/api/health
 ```
+
+**Nota:** En el free tier de Render, el servicio se duerme a los 15 min sin uso. La primera request tras inactividad tarda ~30s en responder. Para que no se duerma, puedes usar https://uptimerobot.com (gratis, hace ping cada 5 min).
 
 ---
 
@@ -53,7 +57,7 @@ curl https://sorteo-api-[hash].koyeb.app/api/health
 ### 2.3 Variables de entorno
 | Variable | Valor |
 |----------|-------|
-| `VITE_API_URL` | `https://sorteo-api-[hash].koyeb.app/api` |
+| `VITE_API_URL` | `https://sorteo-api.onrender.com/api` |
 
 ### 2.4 Deploy
 - Click **Deploy**
@@ -63,9 +67,9 @@ curl https://sorteo-api-[hash].koyeb.app/api/health
 
 ## 3. Actualizar FRONTEND_URL
 
-Volver a Koyeb → Settings → Environment variables:
+Volver a Render → Dashboard → sorteo-api → Environment:
 - Modificar `FRONTEND_URL` → `https://sorteo.vercel.app`
-- Koyeb hace redeploy automático
+- Render hace redeploy automático
 
 ---
 

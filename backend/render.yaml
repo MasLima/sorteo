@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: sorteo-api
+    runtime: node
+    repo: https://github.com/MasLima/sorteo
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: npm start
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: PORT
+        value: 10000
