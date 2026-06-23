@@ -13,6 +13,7 @@
 - En **Settings**:
   - **Name**: `sorteo-api`
   - **Runtime**: `Node`
+  - **Root Directory**: `backend/` ← **IMPORTANTE: poner esto**
   - **Build Command**: `npm install && npx prisma generate && npm run build`
   - **Start Command**: `npm start`
 
