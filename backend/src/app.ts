@@ -3,6 +3,8 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
+import bcrypt from 'bcryptjs';
+import { PrismaClient } from '@prisma/client';
 
 dotenv.config();
 
@@ -49,8 +51,43 @@ try {
   console.error('ERROR al cargar modulos:', err);
 }
 
+async function ensureAdminUser() {
+  try {
+    const prisma = new PrismaClient();
+    const adminRole = await prisma.role.findUnique({ where: { name: 'SUPERADMIN' } });
+    if (!adminRole) {
+      console.log('ADVERTENCIA: No existe rol SUPERADMIN - ejecutar seed primero');
+      return;
+    }
+    const hash = await bcrypt.hash('Admin123!', 10);
+    const existing = await prisma.user.findUnique({ where: { email: 'admin@sorteo.com' } });
+    if (existing) {
+      await prisma.user.update({
+        where: { email: 'admin@sorteo.com' },
+        data: { passwordHash: hash, updatedAt: new Date() },
+      });
+      console.log('Admin password reset to: Admin123!');
+    } else {
+      await prisma.user.create({
+        data: {
+          name: 'Administrador',
+          email: 'admin@sorteo.com',
+          passwordHash: hash,
+          phone: '',
+          roleId: adminRole.id,
+        },
+      });
+      console.log('Admin user created: admin@sorteo.com / Admin123!');
+    }
+    await prisma.$disconnect();
+  } catch (err) {
+    console.error('Error al verificar admin:', err);
+  }
+}
+
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en puerto ${PORT}`);
+  ensureAdminUser();
 });
 
 export default app;
