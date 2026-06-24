@@ -138,8 +138,12 @@ export default function RafflesListPage() {
                 </td>
                 <td className="px-4 py-3 text-gray-500">{r.createdBy.name}</td>
                 <td className="px-4 py-3">
-                  <Link to={`/dashboard/raffles/${r.id}`}
-                    className="text-blue-600 hover:text-blue-800 text-xs font-medium">Ver detalles</Link>
+                  <div className="flex gap-2 items-center">
+                    <Link to={`/dashboard/raffles/${r.id}`}
+                      className="text-blue-600 hover:text-blue-800 text-xs font-medium">Ver</Link>
+                    <button onClick={async () => { if (confirm('¿Eliminar este sorteo?')) { await api.delete(`/raffles/${r.id}`); loadRaffles(); } }}
+                      className="text-red-400 hover:text-red-600 text-xs font-medium">Eliminar</button>
+                  </div>
                 </td>
               </tr>
             ))}

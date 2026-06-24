@@ -5,6 +5,8 @@ import {
   getRaffleById,
   createRaffle,
   updateRaffle,
+  deleteRaffle,
+  deleteTicket,
   createRaffleSchema,
   updateRaffleSchema,
 } from '../services/raffle.service';
@@ -79,6 +81,24 @@ export async function confirmTicketHandler(req: AuthRequest, res: Response) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Datos inválidos', details: error.errors });
     }
+    res.status(400).json({ error: (error as Error).message });
+  }
+}
+
+export async function deleteHandler(req: AuthRequest, res: Response) {
+  try {
+    await deleteRaffle(String(req.params.id));
+    res.json({ message: 'Sorteo eliminado' });
+  } catch (error) {
+    res.status(400).json({ error: (error as Error).message });
+  }
+}
+
+export async function deleteTicketHandler(req: AuthRequest, res: Response) {
+  try {
+    await deleteTicket(String(req.params.ticketId));
+    res.json({ message: 'Ticket eliminado' });
+  } catch (error) {
     res.status(400).json({ error: (error as Error).message });
   }
 }

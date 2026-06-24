@@ -73,6 +73,24 @@ export async function createRaffle(data: z.infer<typeof createRaffleSchema>, use
   });
 }
 
+export async function deleteRaffle(id: string) {
+  const raffle = await prisma.raffle.findUnique({ where: { id } });
+  if (!raffle) throw new Error('Sorteo no encontrado');
+
+  await prisma.winner.deleteMany({ where: { raffleId: id } });
+  await prisma.notificationLog.deleteMany({ where: { raffleId: id } });
+  await prisma.ticket.deleteMany({ where: { raffleId: id } });
+  return prisma.raffle.delete({ where: { id } });
+}
+
+export async function deleteTicket(ticketId: string) {
+  const ticket = await prisma.ticket.findUnique({ where: { id: ticketId } });
+  if (!ticket) throw new Error('Ticket no encontrado');
+
+  await prisma.winner.deleteMany({ where: { ticketId } });
+  return prisma.ticket.delete({ where: { id: ticketId } });
+}
+
 export async function updateRaffle(id: string, data: z.infer<typeof updateRaffleSchema>) {
   const raffle = await prisma.raffle.findUnique({ where: { id } });
   if (!raffle) throw new Error('Sorteo no encontrado');

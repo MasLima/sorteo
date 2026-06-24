@@ -52,7 +52,15 @@ export default function RaffleDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [raffle, setRaffle] = useState<Raffle | null>(null);
-  const qrCanvas = useRef<HTMLCanvasElement>(null);
+  const qrYapeCanvas = useRef<HTMLCanvasElement>(null);
+  const qrRegCanvas = useRef<HTMLCanvasElement>(null);
+
+  const [showEdit, setShowEdit] = useState(false);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDesc, setEditDesc] = useState('');
+  const [editPrice, setEditPrice] = useState('');
+  const [editYape, setEditYape] = useState('');
+  const [editMax, setEditMax] = useState('');
 
   const [showRegister, setShowRegister] = useState(false);
   const [pName, setPName] = useState('');
@@ -83,13 +91,62 @@ export default function RaffleDetailPage() {
   }, [id]);
 
   useEffect(() => {
-    if (raffle && qrCanvas.current) {
-      const url = `${window.location.origin}/pay/${raffle.id}`;
-      QRCode.toCanvas(qrCanvas.current, url, { width: 180, margin: 2 }, (err) => {
+    if (!raffle) return;
+    if (qrYapeCanvas.current && raffle.yapePhone) {
+      const yapeUrl = `yape://v2/pay?phone=${raffle.yapePhone}&amount=${raffle.ticketPrice}&message=${encodeURIComponent(raffle.title)}`;
+      QRCode.toCanvas(qrYapeCanvas.current, yapeUrl, { width: 180, margin: 2 }, (err) => {
+        if (err) console.error(err);
+      });
+    }
+    if (qrRegCanvas.current) {
+      const regUrl = `${window.location.origin}/pay/${raffle.id}`;
+      QRCode.toCanvas(qrRegCanvas.current, regUrl, { width: 180, margin: 2 }, (err) => {
         if (err) console.error(err);
       });
     }
   }, [raffle]);
+
+  const handleEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    try {
+      await api.patch(`/raffles/${id}`, {
+        title: editTitle,
+        description: editDesc || null,
+        ticketPrice: Number(editPrice),
+        yapePhone: editYape || null,
+        maxTickets: editMax ? Number(editMax) : null,
+      });
+      setSuccess('Sorteo actualizado');
+      setShowEdit(false);
+      loadRaffle();
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Error al actualizar');
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!window.confirm('¿Eliminar este sorteo y todos sus tickets?')) return;
+    setError('');
+    try {
+      await api.delete(`/raffles/${id}`);
+      navigate('/dashboard');
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Error al eliminar');
+    }
+  };
+
+  const handleDeleteTicket = async (ticketId: string) => {
+    if (!window.confirm('¿Eliminar este ticket?')) return;
+    setError('');
+    try {
+      await api.delete(`/raffles/tickets/${ticketId}`);
+      setSuccess('Ticket eliminado');
+      loadRaffle();
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Error al eliminar ticket');
+    }
+  };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -194,39 +251,42 @@ export default function RaffleDetailPage() {
             <div className="flex gap-2">
               <button onClick={() => setShowRegister(true)}
                 className="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700">
-                + Registrar Ticket
+                + Registrar
               </button>
               {confirmedTickets > 0 && (
                 <button onClick={() => setShowWinner(true)}
                   className="bg-green-600 text-white px-4 py-2 rounded text-sm hover:bg-green-700">
-                  Registrar Ganador
+                  Ganador
                 </button>
               )}
             </div>
           )}
+          <div className="flex gap-1">
+            <button onClick={() => { setEditTitle(raffle.title); setEditDesc(raffle.description || ''); setEditPrice(String(raffle.ticketPrice)); setEditYape(raffle.yapePhone || ''); setEditMax(raffle.maxTickets ? String(raffle.maxTickets) : ''); setShowEdit(true); }}
+              className="text-gray-500 hover:text-blue-600 text-xs px-2 py-1">Editar</button>
+            <button onClick={handleDelete}
+              className="text-gray-500 hover:text-red-600 text-xs px-2 py-1">Eliminar</button>
+          </div>
         </div>
 
         {raffle.yapePhone && (
-          <div className="mt-4 pt-4 border-t flex items-center gap-6">
-            <div>
-              <p className="text-sm font-medium text-gray-700 mb-1">Código QR para pago:</p>
-              <canvas ref={qrCanvas} className="border rounded" />
-            </div>
-            <div className="text-sm text-gray-500">
-              <p>Escanea el QR o usa el enlace para pagar</p>
-              <p className="mt-1">Número Yape:</p>
-              <p className="font-bold text-lg text-gray-800">{raffle.yapePhone}</p>
-              <p className="mt-1">Monto: <strong>S/.{raffle.ticketPrice}</strong></p>
-              <div className="flex gap-2 mt-2">
-                <a href={`yape://v2/pay?phone=${raffle.yapePhone}&amount=${raffle.ticketPrice}&message=${encodeURIComponent(raffle.title)}`}
-                  className="bg-green-600 text-white px-3 py-1.5 rounded text-xs hover:bg-green-700">
-                  Pagar con Yape
-                </a>
-                <a href={`https://wa.me/${raffle.yapePhone}?text=Quiero%20participar%20en%20${encodeURIComponent(raffle.title)}`}
-                  target="_blank" rel="noopener noreferrer"
-                  className="bg-blue-600 text-white px-3 py-1.5 rounded text-xs hover:bg-blue-700">
-                  WhatsApp
-                </a>
+          <div className="mt-4 pt-4 border-t">
+            <p className="text-sm font-medium text-gray-700 mb-3">Compartir con participantes:</p>
+            <div className="flex items-start gap-8">
+              <div className="text-center">
+                <p className="text-xs text-gray-500 mb-1">QR para Yapear</p>
+                <canvas ref={qrYapeCanvas} className="border rounded inline-block" />
+                <p className="text-xs text-gray-400 mt-1">Escanea con Yape</p>
+              </div>
+              <div className="text-center">
+                <p className="text-xs text-gray-500 mb-1">QR para Registrarse</p>
+                <canvas ref={qrRegCanvas} className="border rounded inline-block" />
+                <p className="text-xs text-gray-400 mt-1">Escanea con cámara</p>
+              </div>
+              <div className="text-sm text-gray-500 pt-6">
+                <p>Yapea al número: <strong className="text-gray-800">{raffle.yapePhone}</strong></p>
+                <p>Monto: <strong className="text-gray-800">S/.{raffle.ticketPrice}</strong></p>
+                <p className="text-xs text-gray-400 mt-2">Luego regístrate con el otro QR</p>
               </div>
             </div>
           </div>
@@ -298,11 +358,11 @@ export default function RaffleDetailPage() {
                   <span className="text-gray-400">{t.registeredBy?.name || 'Auto-registro'}</span>
                 </td>
                 <td className="px-4 py-3">
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 items-center">
                     {t.status === 'PENDING' && raffle.status === 'ACTIVE' && (
                       <button onClick={() => handleConfirm(t.id)}
                         className="text-green-600 hover:text-green-800 text-xs font-medium">
-                        Confirmar pago
+                        Confirmar
                       </button>
                     )}
                     {t.status === 'PENDING' && (
@@ -317,6 +377,8 @@ export default function RaffleDetailPage() {
                         WhatsApp
                       </button>
                     )}
+                    <button onClick={() => handleDeleteTicket(t.id)}
+                      className="text-red-400 hover:text-red-600 text-xs font-medium ml-1">✕</button>
                   </div>
                 </td>
               </tr>
@@ -327,6 +389,47 @@ export default function RaffleDetailPage() {
           </tbody>
         </table>
       </div>
+
+      {showEdit && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h2 className="text-lg font-bold mb-4">Editar Sorteo</h2>
+            <form onSubmit={handleEdit}>
+              <div className="mb-3">
+                <label className="block text-sm font-medium mb-1">Título</label>
+                <input value={editTitle} onChange={(e) => setEditTitle(e.target.value)}
+                  className="w-full border rounded px-3 py-2 text-sm" required />
+              </div>
+              <div className="mb-3">
+                <label className="block text-sm font-medium mb-1">Descripción</label>
+                <textarea value={editDesc} onChange={(e) => setEditDesc(e.target.value)}
+                  className="w-full border rounded px-3 py-2 text-sm" rows={3} />
+              </div>
+              <div className="mb-3">
+                <label className="block text-sm font-medium mb-1">Precio</label>
+                <input type="number" step="0.01" value={editPrice} onChange={(e) => setEditPrice(e.target.value)}
+                  className="w-full border rounded px-3 py-2 text-sm" required />
+              </div>
+              <div className="mb-3">
+                <label className="block text-sm font-medium mb-1">N° Yape</label>
+                <input value={editYape} onChange={(e) => setEditYape(e.target.value)}
+                  className="w-full border rounded px-3 py-2 text-sm" />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-1">Máx. tickets</label>
+                <input type="number" value={editMax} onChange={(e) => setEditMax(e.target.value)}
+                  className="w-full border rounded px-3 py-2 text-sm" />
+              </div>
+              <div className="flex gap-2 justify-end">
+                <button type="button" onClick={() => setShowEdit(false)}
+                  className="px-4 py-2 text-sm border rounded hover:bg-gray-50">Cancelar</button>
+                <button type="submit"
+                  className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">Guardar</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {showRegister && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
