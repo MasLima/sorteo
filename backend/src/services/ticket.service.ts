@@ -23,10 +23,23 @@ export async function getNextTicketNumber(raffleId: string): Promise<number> {
   return (lastTicket?.ticketNumber ?? 0) + 1;
 }
 
+async function createParticipant(data: { participantName: string; participantPhone: string; participantEmail?: string | null }) {
+  let participant = await prisma.participant.findFirst({
+    where: { name: data.participantName, phone: data.participantPhone },
+  });
+
+  if (!participant) {
+    participant = await prisma.participant.create({
+      data: { name: data.participantName, phone: data.participantPhone, email: data.participantEmail || null },
+    });
+  }
+  return participant;
+}
+
 export async function registerTicket(
   raffleId: string,
   data: z.infer<typeof registerTicketSchema>,
-  userId: string | null,
+  userId: string,
 ) {
   const raffle = await prisma.raffle.findUnique({ where: { id: raffleId } });
   if (!raffle) throw new Error('Sorteo no encontrado');
@@ -34,25 +47,10 @@ export async function registerTicket(
 
   if (raffle.maxTickets) {
     const currentCount = await prisma.ticket.count({ where: { raffleId } });
-    if (currentCount >= raffle.maxTickets) {
-      throw new Error('El sorteo ha alcanzado el máximo de tickets');
-    }
+    if (currentCount >= raffle.maxTickets) throw new Error('El sorteo ha alcanzado el máximo de tickets');
   }
 
-  let participant = await prisma.participant.findFirst({
-    where: { name: data.participantName, phone: data.participantPhone },
-  });
-
-  if (!participant) {
-    participant = await prisma.participant.create({
-      data: {
-        name: data.participantName,
-        phone: data.participantPhone,
-        email: data.participantEmail || null,
-      },
-    });
-  }
-
+  const participant = await createParticipant(data);
   const ticketNumber = await getNextTicketNumber(raffleId);
 
   return prisma.ticket.create({
@@ -63,7 +61,38 @@ export async function registerTicket(
       paymentAmount: data.paymentAmount,
       paymentProof: data.paymentProof || null,
       paymentNote: data.paymentNote || null,
-      ...(userId ? { registeredById: userId } : {}),
+      registeredById: userId,
+    },
+    include: {
+      participant: { select: { id: true, name: true, phone: true } },
+      raffle: { select: { title: true } },
+    },
+  });
+}
+
+export async function registerTicketPublic(
+  raffleId: string,
+  data: { participantName: string; participantPhone: string; paymentAmount: number },
+) {
+  const raffle = await prisma.raffle.findUnique({ where: { id: raffleId } });
+  if (!raffle) throw new Error('Sorteo no encontrado');
+  if (raffle.status !== 'ACTIVE') throw new Error('El sorteo no está activo');
+
+  if (raffle.maxTickets) {
+    const currentCount = await prisma.ticket.count({ where: { raffleId } });
+    if (currentCount >= raffle.maxTickets) throw new Error('El sorteo ha alcanzado el máximo de tickets');
+  }
+
+  const participant = await createParticipant(data);
+  const ticketNumber = await getNextTicketNumber(raffleId);
+
+  return prisma.ticket.create({
+    data: {
+      raffleId,
+      participantId: participant.id,
+      ticketNumber,
+      paymentAmount: data.paymentAmount,
+      status: 'PENDING',
     },
     include: {
       participant: { select: { id: true, name: true, phone: true } },

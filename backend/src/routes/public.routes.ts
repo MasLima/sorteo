@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import prisma from '../utils/prisma';
 import { z } from 'zod';
-import { registerTicket } from '../services/ticket.service';
+import { registerTicketPublic } from '../services/ticket.service';
 
 const router = Router();
 
@@ -33,8 +33,8 @@ router.get('/raffles/:id', async (req: Request, res: Response) => {
 
 router.post('/register-ticket', async (req: Request, res: Response) => {
   try {
-    const { raffleId, ...data } = publicRegisterSchema.parse(req.body);
-    const ticket = await registerTicket(raffleId, data, 'self-register');
+    const { raffleId, participantName, participantPhone, paymentAmount } = publicRegisterSchema.parse(req.body);
+    const ticket = await registerTicketPublic(raffleId, { participantName, participantPhone, paymentAmount });
     res.status(201).json({
       ticketNumber: ticket.ticketNumber,
       participantName: ticket.participant.name,
