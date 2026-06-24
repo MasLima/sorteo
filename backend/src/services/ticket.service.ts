@@ -62,6 +62,7 @@ export async function registerTicket(
       paymentProof: data.paymentProof || null,
       paymentNote: data.paymentNote || null,
       registeredById: userId,
+      registrationSource: 'MANUAL',
     },
     include: {
       participant: { select: { id: true, name: true, phone: true } },
@@ -93,6 +94,7 @@ export async function registerTicketPublic(
       ticketNumber,
       paymentAmount: data.paymentAmount,
       status: 'PENDING',
+      registrationSource: 'PUBLIC',
     },
     include: {
       participant: { select: { id: true, name: true, phone: true } },

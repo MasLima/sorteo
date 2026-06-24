@@ -124,11 +124,15 @@ export default function PayPage() {
         </div>
 
         {raffle.yapePhone && (
-          <a href={`https://wa.me/${raffle.yapePhone}?text=Quiero%20participar%20en%20${encodeURIComponent(raffle.title)}`}
-            target="_blank" rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 mt-4 bg-green-600 text-white w-full py-3 rounded-lg font-medium hover:bg-green-700">
-            <span>Pagar con Yape</span>
-          </a>
+          <>
+            <a href={`yape://v2/pay?phone=${raffle.yapePhone}&amount=${raffle.ticketPrice}&message=${encodeURIComponent(raffle.title)}`}
+              className="flex items-center justify-center gap-2 mt-4 bg-green-600 text-white w-full py-3 rounded-lg font-medium hover:bg-green-700">
+              <span>Pagar con Yape</span>
+            </a>
+            <p className="text-xs text-gray-400 mt-1 text-center">
+              Si no se abre Yape, paga al número: <strong>{raffle.yapePhone}</strong>
+            </p>
+          </>
         )}
 
         <hr className="my-6" />

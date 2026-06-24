@@ -104,6 +104,7 @@ model Ticket {
   paymentAmount Float
   paymentProof  String?
   paymentNote   String?
+  registrationSource String?
   assignedAt    DateTime     @default(now())
   confirmedAt   DateTime?
 

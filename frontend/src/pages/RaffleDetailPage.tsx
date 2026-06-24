@@ -17,10 +17,11 @@ interface Ticket {
   paymentAmount: number;
   paymentProof: string | null;
   paymentNote: string | null;
+  registrationSource: string | null;
   assignedAt: string;
   confirmedAt: string | null;
   participant: Participant;
-  registeredBy: { name: string };
+  registeredBy: { name: string } | null;
 }
 
 interface Winner {
@@ -63,15 +64,23 @@ export default function RaffleDetailPage() {
   const [ticketId, setTicketId] = useState('');
   const [prize, setPrize] = useState('');
 
+  const [search, setSearch] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
   const loadRaffle = async () => {
-    const res = await api.get(`/raffles/${id}`);
-    setRaffle(res.data);
+    try {
+      const res = await api.get(`/raffles/${id}`);
+      setRaffle(res.data);
+    } catch { /* ignore polling errors */ }
   };
 
   useEffect(() => { loadRaffle(); }, [id]);
+
+  useEffect(() => {
+    const interval = setInterval(loadRaffle, 5000);
+    return () => clearInterval(interval);
+  }, [id]);
 
   useEffect(() => {
     if (raffle && qrCanvas.current) {
@@ -204,15 +213,21 @@ export default function RaffleDetailPage() {
               <canvas ref={qrCanvas} className="border rounded" />
             </div>
             <div className="text-sm text-gray-500">
-              <p>Escanea el QR para pagar con Yape</p>
-              <p className="mt-1">O envía el pago al número:</p>
+              <p>Escanea el QR o usa el enlace para pagar</p>
+              <p className="mt-1">Número Yape:</p>
               <p className="font-bold text-lg text-gray-800">{raffle.yapePhone}</p>
               <p className="mt-1">Monto: <strong>S/.{raffle.ticketPrice}</strong></p>
-              <a href={`https://wa.me/${raffle.yapePhone}?text=Quiero%20participar%20en%20${encodeURIComponent(raffle.title)}`}
-                target="_blank" rel="noopener noreferrer"
-                className="inline-block mt-2 bg-green-600 text-white px-3 py-1.5 rounded text-xs hover:bg-green-700">
-                Contactar por WhatsApp
-              </a>
+              <div className="flex gap-2 mt-2">
+                <a href={`yape://v2/pay?phone=${raffle.yapePhone}&amount=${raffle.ticketPrice}&message=${encodeURIComponent(raffle.title)}`}
+                  className="bg-green-600 text-white px-3 py-1.5 rounded text-xs hover:bg-green-700">
+                  Pagar con Yape
+                </a>
+                <a href={`https://wa.me/${raffle.yapePhone}?text=Quiero%20participar%20en%20${encodeURIComponent(raffle.title)}`}
+                  target="_blank" rel="noopener noreferrer"
+                  className="bg-blue-600 text-white px-3 py-1.5 rounded text-xs hover:bg-blue-700">
+                  WhatsApp
+                </a>
+              </div>
             </div>
           </div>
         )}
@@ -247,6 +262,11 @@ export default function RaffleDetailPage() {
       )}
 
       <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="p-3 border-b bg-gray-50">
+          <input value={search} onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar participante..."
+            className="w-full border rounded px-3 py-2 text-sm" />
+        </div>
         <table className="w-full text-sm">
           <thead className="bg-gray-50 border-b">
             <tr>
@@ -255,19 +275,28 @@ export default function RaffleDetailPage() {
               <th className="text-left px-4 py-3">Teléfono</th>
               <th className="text-left px-4 py-3">Monto</th>
               <th className="text-left px-4 py-3">Estado</th>
-              <th className="text-left px-4 py-3">Registrado por</th>
+              <th className="text-left px-4 py-3">Origen</th>
               <th className="text-left px-4 py-3"></th>
             </tr>
           </thead>
           <tbody>
-            {raffle.tickets.map((t) => (
+            {raffle.tickets
+              .filter((t) =>
+                !search || t.participant.name.toLowerCase().includes(search.toLowerCase()) ||
+                t.participant.phone.includes(search)
+              )
+              .map((t) => (
               <tr key={t.id} className="border-b hover:bg-gray-50">
                 <td className="px-4 py-3 font-medium">#{t.ticketNumber}</td>
                 <td className="px-4 py-3">{t.participant.name}</td>
                 <td className="px-4 py-3 text-gray-500">{t.participant.phone}</td>
-                <td className="px-4 py-3">${t.paymentAmount}</td>
+                <td className="px-4 py-3">S/.{t.paymentAmount}</td>
                 <td className="px-4 py-3"><span className={statusBadge(t.status)}>{t.status}</span></td>
-                <td className="px-4 py-3 text-gray-500">{t.registeredBy?.name || '-'}</td>
+                <td className="px-4 py-3 text-gray-500 text-xs">
+                  {t.registrationSource === 'PUBLIC' ? 'Web' : t.registrationSource === 'MANUAL' ? 'Manual' : '-'}
+                  <br />
+                  <span className="text-gray-400">{t.registeredBy?.name || 'Auto-registro'}</span>
+                </td>
                 <td className="px-4 py-3">
                   <div className="flex gap-2">
                     {t.status === 'PENDING' && raffle.status === 'ACTIVE' && (
