@@ -26,7 +26,7 @@ export async function getNextTicketNumber(raffleId: string): Promise<number> {
 export async function registerTicket(
   raffleId: string,
   data: z.infer<typeof registerTicketSchema>,
-  userId: string,
+  userId: string | null,
 ) {
   const raffle = await prisma.raffle.findUnique({ where: { id: raffleId } });
   if (!raffle) throw new Error('Sorteo no encontrado');
@@ -63,7 +63,7 @@ export async function registerTicket(
       paymentAmount: data.paymentAmount,
       paymentProof: data.paymentProof || null,
       paymentNote: data.paymentNote || null,
-      registeredById: userId,
+      registeredById: userId || undefined,
     },
     include: {
       participant: { select: { id: true, name: true, phone: true } },

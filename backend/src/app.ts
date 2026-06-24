@@ -41,12 +41,14 @@ try {
   const userRoutes = require('./routes/user.routes').default;
   const raffleRoutes = require('./routes/raffle.routes').default;
   const notificationRoutes = require('./routes/notification.routes').default;
+  const publicRoutes = require('./routes/public.routes').default;
   console.log('Modulos cargados OK');
 
   app.use('/api/auth', authRoutes);
   app.use('/api/users', userRoutes);
   app.use('/api/raffles', raffleRoutes);
   app.use('/api/notifications', notificationRoutes);
+  app.use('/api/public', publicRoutes);
 } catch (err) {
   console.error('ERROR al cargar modulos:', err);
 }

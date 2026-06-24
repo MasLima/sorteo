@@ -69,6 +69,7 @@ model Raffle {
   description String?
   status      RaffleStatus @default(ACTIVE)
   ticketPrice Float
+  yapePhone   String?
   maxTickets  Int?
   startDate   DateTime     @default(now())
   endDate     DateTime?

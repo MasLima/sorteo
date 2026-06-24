@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import DashboardLayout from '../components/DashboardLayout';
+import QRCode from 'qrcode';
 
 interface Participant {
   id: string;
@@ -37,6 +38,7 @@ interface Raffle {
   description: string | null;
   status: string;
   ticketPrice: number;
+  yapePhone: string | null;
   maxTickets: number | null;
   startDate: string;
   endDate: string | null;
@@ -49,6 +51,7 @@ export default function RaffleDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [raffle, setRaffle] = useState<Raffle | null>(null);
+  const qrCanvas = useRef<HTMLCanvasElement>(null);
 
   const [showRegister, setShowRegister] = useState(false);
   const [pName, setPName] = useState('');
@@ -69,6 +72,15 @@ export default function RaffleDetailPage() {
   };
 
   useEffect(() => { loadRaffle(); }, [id]);
+
+  useEffect(() => {
+    if (raffle && qrCanvas.current) {
+      const url = `${window.location.origin}/pay/${raffle.id}`;
+      QRCode.toCanvas(qrCanvas.current, url, { width: 180, margin: 2 }, (err) => {
+        if (err) console.error(err);
+      });
+    }
+  }, [raffle]);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -162,7 +174,8 @@ export default function RaffleDetailPage() {
             <h1 className="text-2xl font-bold">{raffle.title}</h1>
             {raffle.description && <p className="text-gray-500 mt-1">{raffle.description}</p>}
             <div className="flex gap-4 mt-3 text-sm text-gray-600">
-              <span>Precio: <strong>${raffle.ticketPrice}</strong></span>
+              <span>Precio: <strong>S/.{raffle.ticketPrice}</strong></span>
+              {raffle.yapePhone && <span>Yape: <strong>{raffle.yapePhone}</strong></span>}
               <span>Tickets: <strong>{confirmedTickets}/{raffle.maxTickets || '∞'}</strong></span>
               <span>Pendientes: <strong>{pendingTickets}</strong></span>
               <span>Estado: <span className={statusBadge(raffle.status)}>{raffle.status}</span></span>
@@ -183,6 +196,26 @@ export default function RaffleDetailPage() {
             </div>
           )}
         </div>
+
+        {raffle.yapePhone && (
+          <div className="mt-4 pt-4 border-t flex items-center gap-6">
+            <div>
+              <p className="text-sm font-medium text-gray-700 mb-1">Código QR para pago:</p>
+              <canvas ref={qrCanvas} className="border rounded" />
+            </div>
+            <div className="text-sm text-gray-500">
+              <p>Escanea el QR para pagar con Yape</p>
+              <p className="mt-1">O envía el pago al número:</p>
+              <p className="font-bold text-lg text-gray-800">{raffle.yapePhone}</p>
+              <p className="mt-1">Monto: <strong>S/.{raffle.ticketPrice}</strong></p>
+              <a href={`https://wa.me/${raffle.yapePhone}?text=Quiero%20participar%20en%20${encodeURIComponent(raffle.title)}`}
+                target="_blank" rel="noopener noreferrer"
+                className="inline-block mt-2 bg-green-600 text-white px-3 py-1.5 rounded text-xs hover:bg-green-700">
+                Contactar por WhatsApp
+              </a>
+            </div>
+          </div>
+        )}
       </div>
 
       {error && (

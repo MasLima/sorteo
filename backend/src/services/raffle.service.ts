@@ -5,6 +5,7 @@ export const createRaffleSchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
   ticketPrice: z.number().positive(),
+  yapePhone: z.string().optional().nullable(),
   maxTickets: z.number().positive().optional(),
   endDate: z.string().datetime().optional(),
 });
@@ -13,6 +14,7 @@ export const updateRaffleSchema = z.object({
   title: z.string().min(1).optional(),
   description: z.string().optional(),
   ticketPrice: z.number().positive().optional(),
+  yapePhone: z.string().optional().nullable(),
   maxTickets: z.number().positive().optional(),
   endDate: z.string().datetime().optional(),
   status: z.enum(['ACTIVE', 'COMPLETED', 'CANCELLED']).optional(),
@@ -63,6 +65,7 @@ export async function createRaffle(data: z.infer<typeof createRaffleSchema>, use
       title: data.title,
       description: data.description || null,
       ticketPrice: data.ticketPrice,
+      yapePhone: data.yapePhone || null,
       maxTickets: data.maxTickets || null,
       endDate: data.endDate ? new Date(data.endDate) : null,
       createdById: userId,
@@ -78,6 +81,7 @@ export async function updateRaffle(id: string, data: z.infer<typeof updateRaffle
   if (data.title) updateData.title = data.title;
   if (data.description !== undefined) updateData.description = data.description;
   if (data.ticketPrice) updateData.ticketPrice = data.ticketPrice;
+  if (data.yapePhone !== undefined) updateData.yapePhone = data.yapePhone;
   if (data.maxTickets !== undefined) updateData.maxTickets = data.maxTickets;
   if (data.endDate) updateData.endDate = new Date(data.endDate);
   if (data.status) updateData.status = data.status;

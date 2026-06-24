@@ -20,6 +20,7 @@ export default function RafflesListPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [title, setTitle] = useState('');
   const [ticketPrice, setTicketPrice] = useState('');
+  const [yapePhone, setYapePhone] = useState('');
   const [maxTickets, setMaxTickets] = useState('');
   const [description, setDescription] = useState('');
 
@@ -35,12 +36,14 @@ export default function RafflesListPage() {
     await api.post('/raffles', {
       title,
       ticketPrice: Number(ticketPrice),
+      yapePhone: yapePhone || null,
       maxTickets: maxTickets ? Number(maxTickets) : undefined,
       description: description || undefined,
     });
     setShowCreate(false);
     setTitle('');
     setTicketPrice('');
+    setYapePhone('');
     setMaxTickets('');
     setDescription('');
     loadRaffles();
@@ -81,6 +84,11 @@ export default function RafflesListPage() {
                 <label className="block text-sm font-medium mb-1">Precio del ticket</label>
                 <input type="number" step="0.01" value={ticketPrice} onChange={(e) => setTicketPrice(e.target.value)}
                   className="w-full border rounded px-3 py-2 text-sm" required />
+              </div>
+              <div className="mb-3">
+                <label className="block text-sm font-medium mb-1">N° Yape (opcional)</label>
+                <input value={yapePhone} onChange={(e) => setYapePhone(e.target.value)}
+                  className="w-full border rounded px-3 py-2 text-sm" placeholder="51987123456" />
               </div>
               <div className="mb-3">
                 <label className="block text-sm font-medium mb-1">Máx. tickets (opcional)</label>
