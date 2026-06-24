@@ -63,7 +63,7 @@ export async function registerTicket(
       paymentAmount: data.paymentAmount,
       paymentProof: data.paymentProof || null,
       paymentNote: data.paymentNote || null,
-      registeredById: userId || undefined,
+      ...(userId ? { registeredById: userId } : {}),
     },
     include: {
       participant: { select: { id: true, name: true, phone: true } },
