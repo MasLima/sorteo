@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
 import DashboardLayout from '../components/DashboardLayout';
+import { Plus, Trash2, Eye, Search, X } from 'lucide-react';
 
 interface Raffle {
   id: string;
@@ -23,6 +24,7 @@ export default function RafflesListPage() {
   const [yapePhone, setYapePhone] = useState('');
   const [maxTickets, setMaxTickets] = useState('');
   const [description, setDescription] = useState('');
+  const [search, setSearch] = useState('');
 
   const loadRaffles = async () => {
     const res = await api.get('/raffles');
@@ -34,121 +36,133 @@ export default function RafflesListPage() {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     await api.post('/raffles', {
-      title,
-      ticketPrice: Number(ticketPrice),
-      yapePhone: yapePhone || null,
-      maxTickets: maxTickets ? Number(maxTickets) : undefined,
-      description: description || undefined,
+      title, ticketPrice: Number(ticketPrice), yapePhone: yapePhone || null,
+      maxTickets: maxTickets ? Number(maxTickets) : undefined, description: description || undefined,
     });
     setShowCreate(false);
-    setTitle('');
-    setTicketPrice('');
-    setYapePhone('');
-    setMaxTickets('');
-    setDescription('');
+    setTitle(''); setTicketPrice(''); setYapePhone(''); setMaxTickets(''); setDescription('');
+    loadRaffles();
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('¿Eliminar este sorteo y todos sus tickets?')) return;
+    await api.delete(`/raffles/${id}`);
     loadRaffles();
   };
 
   const statusBadge = (status: string) => {
     const colors: Record<string, string> = {
-      ACTIVE: 'bg-green-100 text-green-800',
-      COMPLETED: 'bg-blue-100 text-blue-800',
-      CANCELLED: 'bg-red-100 text-red-800',
+      ACTIVE: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300',
+      COMPLETED: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300',
+      CANCELLED: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300',
     };
     return `px-2 py-1 rounded text-xs font-medium ${colors[status] || 'bg-gray-100'}`;
   };
 
+  const filtered = raffles.filter((r) =>
+    !search || r.title.toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
     <DashboardLayout>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Sorteos</h1>
-        <button
-          onClick={() => setShowCreate(true)}
-          className="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700"
-        >
-          + Nuevo Sorteo
+        <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Sorteos</h1>
+        <button onClick={() => setShowCreate(true)}
+          className="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700 flex items-center gap-2">
+          <Plus size={16} /> Nuevo Sorteo
         </button>
       </div>
 
       {showCreate && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-lg font-bold mb-4">Crear Sorteo</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
+            <h2 className="text-lg font-bold mb-4 text-gray-800 dark:text-white">Crear Sorteo</h2>
             <form onSubmit={handleCreate}>
               <div className="mb-3">
-                <label className="block text-sm font-medium mb-1">Título</label>
+                <label className="block text-sm font-medium mb-1 dark:text-gray-300">Título</label>
                 <input value={title} onChange={(e) => setTitle(e.target.value)}
-                  className="w-full border rounded px-3 py-2 text-sm" required />
+                  className="w-full border rounded px-3 py-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" required />
               </div>
               <div className="mb-3">
-                <label className="block text-sm font-medium mb-1">Precio del ticket</label>
+                <label className="block text-sm font-medium mb-1 dark:text-gray-300">Precio del ticket (S/.)</label>
                 <input type="number" step="0.01" value={ticketPrice} onChange={(e) => setTicketPrice(e.target.value)}
-                  className="w-full border rounded px-3 py-2 text-sm" required />
+                  className="w-full border rounded px-3 py-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" required />
               </div>
               <div className="mb-3">
-                <label className="block text-sm font-medium mb-1">N° Yape (opcional)</label>
+                <label className="block text-sm font-medium mb-1 dark:text-gray-300">N° Yape (opcional)</label>
                 <input value={yapePhone} onChange={(e) => setYapePhone(e.target.value)}
-                  className="w-full border rounded px-3 py-2 text-sm" placeholder="51987123456" />
+                  className="w-full border rounded px-3 py-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="51987123456" />
               </div>
               <div className="mb-3">
-                <label className="block text-sm font-medium mb-1">Máx. tickets (opcional)</label>
+                <label className="block text-sm font-medium mb-1 dark:text-gray-300">Máx. tickets (opcional)</label>
                 <input type="number" value={maxTickets} onChange={(e) => setMaxTickets(e.target.value)}
-                  className="w-full border rounded px-3 py-2 text-sm" />
+                  className="w-full border rounded px-3 py-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
               </div>
               <div className="mb-4">
-                <label className="block text-sm font-medium mb-1">Descripción (opcional)</label>
+                <label className="block text-sm font-medium mb-1 dark:text-gray-300">Descripción (opcional)</label>
                 <textarea value={description} onChange={(e) => setDescription(e.target.value)}
-                  className="w-full border rounded px-3 py-2 text-sm" rows={3} />
+                  className="w-full border rounded px-3 py-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" rows={3} />
               </div>
               <div className="flex gap-2 justify-end">
                 <button type="button" onClick={() => setShowCreate(false)}
-                  className="px-4 py-2 text-sm border rounded hover:bg-gray-50">Cancelar</button>
+                  className="px-4 py-2 text-sm border rounded hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700">Cancelar</button>
                 <button type="submit"
-                  className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">Crear</button>
+                  className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-1"><Plus size={14} /> Crear</button>
               </div>
             </form>
           </div>
         </div>
       )}
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+        <div className="p-3 border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex items-center gap-2">
+          <Search size={16} className="text-gray-400" />
+          <input value={search} onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar sorteo..."
+            className="flex-1 border rounded px-3 py-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+          {search && (
+            <button onClick={() => setSearch('')} className="text-gray-400 hover:text-gray-600">
+              <X size={16} />
+            </button>
+          )}
+        </div>
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 border-b">
+          <thead className="bg-gray-50 dark:bg-gray-900 border-b dark:border-gray-700">
             <tr>
-              <th className="text-left px-4 py-3 font-medium">Título</th>
-              <th className="text-left px-4 py-3 font-medium">Estado</th>
-              <th className="text-left px-4 py-3 font-medium">Precio</th>
-              <th className="text-left px-4 py-3 font-medium">Tickets</th>
-              <th className="text-left px-4 py-3 font-medium">Ganador</th>
-              <th className="text-left px-4 py-3 font-medium">Creado por</th>
-              <th className="text-left px-4 py-3 font-medium"></th>
+              <th className="text-left px-4 py-3 dark:text-gray-300">Título</th>
+              <th className="text-left px-4 py-3 dark:text-gray-300">Estado</th>
+              <th className="text-left px-4 py-3 dark:text-gray-300">Precio</th>
+              <th className="text-left px-4 py-3 dark:text-gray-300">Tickets</th>
+              <th className="text-left px-4 py-3 dark:text-gray-300">Ganador</th>
+              <th className="text-left px-4 py-3 dark:text-gray-300">Creado por</th>
+              <th className="text-left px-4 py-3 dark:text-gray-300"></th>
             </tr>
           </thead>
           <tbody>
-            {raffles.map((r) => (
-              <tr key={r.id} className="border-b hover:bg-gray-50">
-                <td className="px-4 py-3 font-medium">{r.title}</td>
+            {filtered.map((r) => (
+              <tr key={r.id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                <td className="px-4 py-3 font-medium dark:text-white">{r.title}</td>
                 <td className="px-4 py-3"><span className={statusBadge(r.status)}>{r.status}</span></td>
-                <td className="px-4 py-3">${r.ticketPrice}</td>
-                <td className="px-4 py-3">
-                  {r.tickets.filter((t) => t.status === 'CONFIRMED').length}/{r.maxTickets || '∞'}
-                </td>
-                <td className="px-4 py-3">
-                  {r.winner ? `${r.winner.participant.name} (#${r.winner.ticket.ticketNumber})` : '-'}
-                </td>
-                <td className="px-4 py-3 text-gray-500">{r.createdBy.name}</td>
+                <td className="px-4 py-3 dark:text-gray-300">S/.{r.ticketPrice}</td>
+                <td className="px-4 py-3 dark:text-gray-300">{r.tickets.filter(t => t.status === 'CONFIRMED').length}/{r.maxTickets || '∞'}</td>
+                <td className="px-4 py-3 dark:text-gray-300">{r.winner ? `${r.winner.participant.name} (#${r.winner.ticket.ticketNumber})` : '-'}</td>
+                <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{r.createdBy.name}</td>
                 <td className="px-4 py-3">
                   <div className="flex gap-2 items-center">
                     <Link to={`/dashboard/raffles/${r.id}`}
-                      className="text-blue-600 hover:text-blue-800 text-xs font-medium">Ver</Link>
-                    <button onClick={async () => { if (confirm('¿Eliminar este sorteo?')) { await api.delete(`/raffles/${r.id}`); loadRaffles(); } }}
-                      className="text-red-400 hover:text-red-600 text-xs font-medium">Eliminar</button>
+                      className="text-blue-600 hover:text-blue-800 dark:text-blue-400 flex items-center gap-1 text-xs font-medium">
+                      <Eye size={14} /> Ver
+                    </Link>
+                    <button onClick={() => handleDelete(r.id)}
+                      className="text-red-400 hover:text-red-600 flex items-center gap-1 text-xs font-medium">
+                      <Trash2 size={14} /> Eliminar
+                    </button>
                   </div>
                 </td>
               </tr>
             ))}
-            {raffles.length === 0 && (
-              <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-400">No hay sorteos creados</td></tr>
+            {filtered.length === 0 && (
+              <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-400">No hay sorteos</td></tr>
             )}
           </tbody>
         </table>

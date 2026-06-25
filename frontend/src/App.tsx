@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './pages/LoginPage';
 import RafflesListPage from './pages/RafflesListPage';
 import RaffleDetailPage from './pages/RaffleDetailPage';
+import UsersPage from './pages/UsersPage';
 import PayPage from './pages/PayPage';
 
 function App() {
@@ -10,6 +11,7 @@ function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/dashboard" element={<RafflesListPage />} />
       <Route path="/dashboard/raffles/:id" element={<RaffleDetailPage />} />
+      <Route path="/dashboard/users" element={<UsersPage />} />
       <Route path="/pay/:id" element={<PayPage />} />
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>

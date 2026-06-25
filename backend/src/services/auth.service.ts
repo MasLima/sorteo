@@ -60,6 +60,7 @@ export async function login(email: string, password: string) {
       email: user.email,
       role: user.role.name,
     },
+    permissions,
     ...tokens,
   };
 }
