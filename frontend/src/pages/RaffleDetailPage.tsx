@@ -264,15 +264,15 @@ export default function RaffleDetailPage() {
             className="ml-auto bg-green-600 text-white px-3 py-2 rounded text-xs hover:bg-green-700 flex items-center gap-1"><Download size={14} /> Excel</button>
         </div>
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 dark:bg-gray-900 border-b dark:border-gray-700">
+          <thead className="bg-gray-100 dark:bg-gray-700 border-b dark:border-gray-600">
             <tr>
-              <th className="text-left px-4 py-3 dark:text-gray-300"># Ticket</th>
-              <th className="text-left px-4 py-3 dark:text-gray-300">Participante</th>
-              <th className="text-left px-4 py-3 dark:text-gray-300">Teléfono</th>
-              <th className="text-left px-4 py-3 dark:text-gray-300">Monto</th>
-              <th className="text-left px-4 py-3 dark:text-gray-300">Estado</th>
-              <th className="text-left px-4 py-3 dark:text-gray-300">Origen</th>
-              <th className="text-left px-4 py-3 dark:text-gray-300"></th>
+              <th className="text-left px-4 py-3 dark:text-gray-200 font-semibold"># Ticket</th>
+              <th className="text-left px-4 py-3 dark:text-gray-200 font-semibold">Participante</th>
+              <th className="text-left px-4 py-3 dark:text-gray-200 font-semibold">Teléfono</th>
+              <th className="text-left px-4 py-3 dark:text-gray-200 font-semibold">Monto</th>
+              <th className="text-left px-4 py-3 dark:text-gray-200 font-semibold">Estado</th>
+              <th className="text-left px-4 py-3 dark:text-gray-200 font-semibold">Origen</th>
+              <th className="text-left px-4 py-3 dark:text-gray-200 font-semibold"></th>
             </tr>
           </thead>
           <tbody>

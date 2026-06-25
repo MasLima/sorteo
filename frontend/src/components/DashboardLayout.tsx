@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import {
@@ -20,6 +20,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [dark, setDark] = useState(() => localStorage.getItem('theme') === 'dark');
   const [showChangePwd, setShowChangePwd] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setShowUserMenu(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', dark);
@@ -98,10 +110,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   <Menu size={20} />
                 </button>
               )}
-              <span className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-                <User size={16} className="text-gray-400" />
-                {user?.name} <span className="text-xs text-gray-400 dark:text-gray-500">({user?.role})</span>
-              </span>
+              <div className="relative" ref={userMenuRef}>
+                <button onClick={() => setShowUserMenu(!showUserMenu)} title="Menú de usuario"
+                  className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white">
+                  <User size={16} className="text-gray-400" />
+                  {user?.name} <span className="text-xs text-gray-400 dark:text-gray-500">({user?.role})</span>
+                </button>
+                {showUserMenu && (
+                  <div className="absolute top-full left-0 mt-1 bg-white dark:bg-gray-700 rounded shadow-lg border dark:border-gray-600 py-1 min-w-[160px] z-50">
+                    <button onClick={() => { setShowUserMenu(false); setShowChangePwd(true); }}
+                      className="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 flex items-center gap-2">
+                      <Lock size={14} /> Cambiar contraseña
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
             <div className="flex items-center gap-3">
               <button onClick={() => setShowChangePwd(true)} title="Cambiar contraseña"
