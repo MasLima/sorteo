@@ -2,12 +2,22 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import DashboardLayout from '../components/DashboardLayout';
+import ConfirmModal from '../components/ConfirmModal';
 import QRCode from 'qrcode';
 import * as XLSX from 'xlsx';
+import { useAuth } from '../contexts/AuthContext';
 import {
-  ArrowLeft, Plus, CheckCircle, Clock, Send, X, Edit3, Trash2, Trophy,
-  Search, Download, Wallet,
+  ArrowLeft, Plus, CheckCircle, Clock, X, Edit3, Trash2, Trophy,
+  Search, Download,
 } from 'lucide-react';
+
+function WhatsAppIcon({ size }: { size: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+    </svg>
+  );
+}
 
 interface Ticket {
   id: string; ticketNumber: number; status: string; paymentAmount: number;
@@ -21,13 +31,15 @@ interface Raffle {
   id: string; title: string; description: string | null; status: string;
   ticketPrice: number; yapePhone: string | null; maxTickets: number | null;
   startDate: string; endDate: string | null;
-  tickets: Ticket[]; winner: { id: string; prize: string | null; announcedAt: string; participant: { name: string; phone: string }; ticket: { ticketNumber: number }; registeredBy: { name: string } } | null;
+  tickets: Ticket[];
+  winner: { id: string; prize: string | null; announcedAt: string; participant: { name: string; phone: string }; ticket: { ticketNumber: number }; registeredBy: { name: string } } | null;
   createdBy: { id: string; name: string };
 }
 
 export default function RaffleDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { hasPermission } = useAuth();
   const [raffle, setRaffle] = useState<Raffle | null>(null);
   const qrYapeCanvas = useRef<HTMLCanvasElement>(null);
   const qrRegCanvas = useRef<HTMLCanvasElement>(null);
@@ -45,6 +57,8 @@ export default function RaffleDetailPage() {
 
   const [showWinner, setShowWinner] = useState(false);
   const [ticketId, setTicketId] = useState(''); const [prize, setPrize] = useState('');
+
+  const [confirmDel, setConfirmDel] = useState<{ type: 'raffle' | 'ticket'; ticketId?: string } | null>(null);
 
   const loadRaffle = async () => {
     try { const res = await api.get(`/raffles/${id}`); setRaffle(res.data); } catch { /* polling */ }
@@ -75,7 +89,6 @@ export default function RaffleDetailPage() {
   };
 
   const handleDelete = async () => {
-    if (!confirm('¿Eliminar este sorteo y todos sus tickets?')) return;
     try { await api.delete(`/raffles/${id}`); navigate('/dashboard'); } catch (err: any) { setError(err.response?.data?.error || 'Error al eliminar'); }
   };
 
@@ -94,9 +107,9 @@ export default function RaffleDetailPage() {
     catch (err: any) { setError(err.response?.data?.error || 'Error al confirmar'); }
   };
 
-  const handleDeleteTicket = async (tid: string) => {
-    if (!confirm('¿Eliminar este ticket?')) return;
-    try { await api.delete(`/raffles/tickets/${tid}`); setSuccess('Ticket eliminado'); loadRaffle(); }
+  const handleDeleteTicket = async () => {
+    if (!confirmDel?.ticketId) return;
+    try { await api.delete(`/raffles/tickets/${confirmDel.ticketId}`); setSuccess('Ticket eliminado'); setConfirmDel(null); loadRaffle(); }
     catch (err: any) { setError(err.response?.data?.error || 'Error al eliminar'); }
   };
 
@@ -137,33 +150,37 @@ export default function RaffleDetailPage() {
 
   return (
     <DashboardLayout>
-      <button onClick={() => navigate('/dashboard')} className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 mb-4">
-        <ArrowLeft size={16} /> Volver a sorteos
+      <button onClick={() => navigate('/dashboard')} title="Volver a sorteos"
+        className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 mb-4">
+        <ArrowLeft size={16} /> Volver
       </button>
 
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-6 mb-6">
         <div className="flex justify-between items-start">
           <div>
             <h1 className="text-2xl font-bold text-gray-800 dark:text-white">{raffle.title}</h1>
             {raffle.description && <p className="text-gray-500 dark:text-gray-400 mt-1">{raffle.description}</p>}
             <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3 text-sm text-gray-600 dark:text-gray-300">
-              <span className="flex items-center gap-1"><Wallet size={14} /> S/.{raffle.ticketPrice}</span>
+              <span>Precio: <strong>S/.{raffle.ticketPrice}</strong></span>
               {raffle.yapePhone && <span>Yape: <strong>{raffle.yapePhone}</strong></span>}
               <span>Vendidos: <strong>{confirmedTickets}/{raffle.maxTickets || '∞'}</strong></span>
               <span>Pendientes: <strong>{pendingTickets}</strong></span>
               <span className={`px-2 py-0.5 rounded text-xs font-medium ${raffle.status === 'ACTIVE' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' : raffle.status === 'COMPLETED' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'}`}>{raffle.status}</span>
             </div>
           </div>
-          <div className="flex gap-2 items-start">
+          <div className="flex gap-1 items-start">
             {raffle.status === 'ACTIVE' && (
               <>
-                <button onClick={() => setShowRegister(true)} className="bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700 flex items-center gap-1"><Plus size={16} /> Registrar</button>
-                {confirmedTickets > 0 && <button onClick={() => setShowWinner(true)} className="bg-green-600 text-white px-3 py-2 rounded text-sm hover:bg-green-700 flex items-center gap-1"><Trophy size={16} /> Ganador</button>}
+                <button onClick={() => setShowRegister(true)} title="Registrar ticket"
+                  className="bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700 flex items-center gap-1"><Plus size={16} /> Registrar</button>
+                {confirmedTickets > 0 && <button onClick={() => setShowWinner(true)} title="Registrar ganador"
+                  className="bg-green-600 text-white px-3 py-2 rounded text-sm hover:bg-green-700 flex items-center gap-1"><Trophy size={16} /> Ganador</button>}
               </>
             )}
-            <button onClick={() => { setEditTitle(raffle.title); setEditDesc(raffle.description || ''); setEditPrice(String(raffle.ticketPrice)); setEditYape(raffle.yapePhone || ''); setEditMax(raffle.maxTickets ? String(raffle.maxTickets) : ''); setShowEdit(true); }}
+            <button onClick={() => { setEditTitle(raffle.title); setEditDesc(raffle.description || ''); setEditPrice(String(raffle.ticketPrice)); setEditYape(raffle.yapePhone || ''); setEditMax(raffle.maxTickets ? String(raffle.maxTickets) : ''); setShowEdit(true); }} title="Editar sorteo"
               className="text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 p-1"><Edit3 size={16} /></button>
-            <button onClick={handleDelete} className="text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 p-1"><Trash2 size={16} /></button>
+            <button onClick={() => setConfirmDel({ type: 'raffle' })} title="Eliminar sorteo"
+              className="text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 p-1"><Trash2 size={16} /></button>
           </div>
         </div>
 
@@ -201,20 +218,29 @@ export default function RaffleDetailPage() {
               <p className="mt-1 dark:text-gray-300">{raffle.winner.participant.name} - Ticket #{raffle.winner.ticket.ticketNumber}{raffle.winner.prize && ` - Premio: ${raffle.winner.prize}`}</p>
               <p className="text-xs text-gray-400 mt-1">Registrado por {raffle.winner.registeredBy.name}</p>
             </div>
-            <button onClick={() => sendNotif('winner', { raffleId: raffle.id })}
-              className="bg-green-600 text-white px-3 py-1.5 rounded text-xs hover:bg-green-700 flex items-center gap-1"><Send size={14} /> Notificar</button>
+            <button onClick={() => sendNotif('winner', { raffleId: raffle.id })} title="Notificar por WhatsApp"
+              className="bg-green-600 text-white px-3 py-1.5 rounded text-xs hover:bg-green-700 flex items-center gap-1"><WhatsAppIcon size={14} /> Notificar</button>
           </div>
         </div>
       )}
 
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-        <div className="p-3 border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex items-center gap-2">
-          <Search size={16} className="text-gray-400" />
-          <input value={search} onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar participante..."
-            className="flex-1 border rounded px-3 py-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
-          {search && <button onClick={() => setSearch('')} className="text-gray-400 hover:text-gray-600"><X size={16} /></button>}
-          <button onClick={exportExcel} className="ml-auto bg-green-600 text-white px-3 py-2 rounded text-xs hover:bg-green-700 flex items-center gap-1"><Download size={14} /> Excel</button>
+        <div className="p-3 border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex flex-wrap items-center gap-2">
+          <div className="relative flex-1 max-w-xs">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input value={search} onChange={(e) => setSearch(e.target.value)}
+              placeholder="Buscar participante..."
+              className="w-full border rounded pl-9 pr-8 py-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+            {search && (
+              <button onClick={() => setSearch('')} title="Limpiar búsqueda"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                <X size={14} />
+              </button>
+            )}
+          </div>
+          <span className="text-xs text-gray-500 dark:text-gray-400">{filteredTickets.length} de {raffle.tickets.length} registros</span>
+          <button onClick={exportExcel} title="Exportar a Excel"
+            className="ml-auto bg-green-600 text-white px-3 py-2 rounded text-xs hover:bg-green-700 flex items-center gap-1"><Download size={14} /> Excel</button>
         </div>
         <table className="w-full text-sm">
           <thead className="bg-gray-50 dark:bg-gray-900 border-b dark:border-gray-700">
@@ -248,19 +274,21 @@ export default function RaffleDetailPage() {
                 <td className="px-4 py-3">
                   <div className="flex gap-1 items-center">
                     {t.status === 'PENDING' && raffle.status === 'ACTIVE' && (
-                      <button onClick={() => handleConfirm(t.id)}
-                        className="text-green-600 hover:text-green-800 dark:text-green-400 text-xs font-medium flex items-center gap-1"><CheckCircle size={13} /> Confirmar</button>
+                      <button onClick={() => handleConfirm(t.id)} title="Confirmar pago"
+                        className="text-green-600 hover:text-green-800 dark:text-green-400 text-xs font-medium flex items-center gap-1"><CheckCircle size={13} /></button>
                     )}
                     {t.status === 'PENDING' && (
-                      <button onClick={() => sendNotif('ticket', { ticketId: t.id })}
-                        className="text-blue-600 hover:text-blue-800 dark:text-blue-400 text-xs flex items-center gap-1"><Send size={13} /></button>
+                      <button onClick={() => sendNotif('ticket', { ticketId: t.id })} title="Enviar WhatsApp"
+                        className="text-blue-600 hover:text-blue-800 dark:text-blue-400 text-xs flex items-center"><WhatsAppIcon size={14} /></button>
                     )}
                     {t.status === 'CONFIRMED' && (
-                      <button onClick={() => sendNotif('payment-confirmed', { ticketId: t.id })}
-                        className="text-blue-600 hover:text-blue-800 dark:text-blue-400 text-xs flex items-center gap-1"><Send size={13} /></button>
+                      <button onClick={() => sendNotif('payment-confirmed', { ticketId: t.id })} title="Enviar WhatsApp"
+                        className="text-blue-600 hover:text-blue-800 dark:text-blue-400 text-xs flex items-center"><WhatsAppIcon size={14} /></button>
                     )}
-                    <button onClick={() => handleDeleteTicket(t.id)}
-                      className="text-red-400 hover:text-red-600 dark:text-red-400 text-xs flex items-center"><X size={13} /></button>
+                    {hasPermission('raffle.edit') && (
+                      <button onClick={() => setConfirmDel({ type: 'ticket', ticketId: t.id })} title="Eliminar ticket"
+                        className="text-red-400 hover:text-red-600 dark:text-red-400 text-xs flex items-center"><Trash2 size={13} /></button>
+                    )}
                   </div>
                 </td>
               </tr>
@@ -304,8 +332,9 @@ export default function RaffleDetailPage() {
               </div>
               <div className="flex gap-2 justify-end">
                 <button type="button" onClick={() => setShowEdit(false)}
-                  className="px-4 py-2 text-sm border rounded hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700">Cancelar</button>
-                <button type="submit" className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">Guardar</button>
+                  className="px-4 py-2 text-sm border rounded hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 flex items-center gap-1"><X size={14} /> Cancelar</button>
+                <button type="submit" title="Guardar cambios"
+                  className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">Guardar</button>
               </div>
             </form>
           </div>
@@ -339,8 +368,9 @@ export default function RaffleDetailPage() {
               </div>
               <div className="flex gap-2 justify-end">
                 <button type="button" onClick={() => setShowRegister(false)}
-                  className="px-4 py-2 text-sm border rounded hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700">Cancelar</button>
-                <button type="submit" className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-1"><Plus size={14} /> Registrar</button>
+                  className="px-4 py-2 text-sm border rounded hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 flex items-center gap-1"><X size={14} /> Cancelar</button>
+                <button type="submit" title="Registrar ticket"
+                  className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-1"><Plus size={14} /> Registrar</button>
               </div>
             </form>
           </div>
@@ -369,13 +399,33 @@ export default function RaffleDetailPage() {
               </div>
               <div className="flex gap-2 justify-end">
                 <button type="button" onClick={() => setShowWinner(false)}
-                  className="px-4 py-2 text-sm border rounded hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700">Cancelar</button>
-                <button type="submit" className="px-4 py-2 text-sm bg-green-600 text-white rounded hover:bg-green-700 flex items-center gap-1"><Trophy size={14} /> Registrar</button>
+                  className="px-4 py-2 text-sm border rounded hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 flex items-center gap-1"><X size={14} /> Cancelar</button>
+                <button type="submit" title="Registrar ganador"
+                  className="px-4 py-2 text-sm bg-green-600 text-white rounded hover:bg-green-700 flex items-center gap-1"><Trophy size={14} /> Registrar</button>
               </div>
             </form>
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        open={confirmDel?.type === 'raffle'}
+        title="Eliminar sorteo"
+        message="¿Eliminar este sorteo y todos sus tickets? Esta acción no se puede deshacer."
+        confirmLabel="Eliminar"
+        danger
+        onConfirm={() => { setConfirmDel(null); handleDelete(); }}
+        onCancel={() => setConfirmDel(null)}
+      />
+      <ConfirmModal
+        open={confirmDel?.type === 'ticket'}
+        title="Eliminar ticket"
+        message="¿Eliminar este ticket? Esta acción no se puede deshacer."
+        confirmLabel="Eliminar"
+        danger
+        onConfirm={handleDeleteTicket}
+        onCancel={() => setConfirmDel(null)}
+      />
     </DashboardLayout>
   );
 }

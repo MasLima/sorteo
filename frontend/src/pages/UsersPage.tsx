@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
 import DashboardLayout from '../components/DashboardLayout';
-import { Plus, UserPlus, Shield, Ban } from 'lucide-react';
+import { Plus, UserPlus, Shield, Ban, X } from 'lucide-react';
 
 interface User {
   id: string; name: string; email: string; phone: string | null;
@@ -97,7 +97,7 @@ export default function UsersPage() {
               {error && <div className="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 p-3 rounded mb-4 text-sm">{error}</div>}
               <div className="flex gap-2 justify-end">
                 <button type="button" onClick={() => setShowCreate(false)}
-                  className="px-4 py-2 text-sm border rounded hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700">Cancelar</button>
+                  className="px-4 py-2 text-sm border rounded hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 flex items-center gap-1"><X size={14} /> Cancelar</button>
                 <button type="submit" className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-1"><Plus size={14} /> Crear</button>
               </div>
             </form>
