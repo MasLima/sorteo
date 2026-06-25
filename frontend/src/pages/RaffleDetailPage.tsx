@@ -215,7 +215,7 @@ export default function RaffleDetailPage() {
                   const file = e.target.files?.[0]; if (!file) return;
                   setScanning(true); setScanResult(null);
                   const form = new FormData(); form.append('image', file);
-                  try { const res = await api.post(`/raffles/${id}/scan-payment`, form); setScanResult(res.data); } catch { setScanResult({ matched: false, error: 'Error al procesar la imagen' }); }
+                  try { const res = await api.post(`/raffles/${id}/scan-payment`, form); setScanResult(res.data); } catch (err: any) { setScanResult({ matched: false, error: err.response?.data?.error || err.message || 'Error al procesar la imagen' }); }
                   setScanning(false);
                   e.target.value = '';
                 }} />

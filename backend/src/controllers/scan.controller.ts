@@ -12,7 +12,17 @@ export async function scanPaymentHandler(req: AuthRequest, res: Response) {
     const raffle = await prisma.raffle.findUnique({ where: { id: raffleId } });
     if (!raffle) return res.status(404).json({ error: 'Sorteo no encontrado' });
 
-    const scan = await scanPaymentImage(file.path);
+    let scan: any = { rawText: '', confidence: 0 };
+    try {
+      scan = await scanPaymentImage(file.path);
+    } catch (ocrErr) {
+      return res.json({
+        rawText: '', confidence: 0,
+        matched: false, autoConfirmed: false,
+        error: `Error de OCR: ${(ocrErr as Error).message}. Verifica que la imagen sea legible.`,
+      });
+    }
+
     const data: any = {
       rawText: scan.rawText,
       confidence: scan.confidence,
