@@ -137,8 +137,9 @@ export default function RafflesListPage() {
             </tr>
           </thead>
           <tbody>
-            {filtered.map((r) => (
-              <tr key={r.id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+            {filtered.map((r, i) => (
+              <tr key={r.id}
+                className={`border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/30 ${i % 2 === 0 ? 'bg-gray-50/50 dark:bg-gray-800/20' : ''}`}>
                 <td className="px-4 py-3 font-medium dark:text-white">{r.title}</td>
                 <td className="px-4 py-3"><span className={statusBadge(r.status)}>{r.status}</span></td>
                 <td className="px-4 py-3 dark:text-gray-300">S/.{r.ticketPrice}</td>

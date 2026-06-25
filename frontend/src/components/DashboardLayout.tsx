@@ -3,7 +3,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Sun, Moon, LogOut, Menu, User, ChevronLeft,
-
 } from 'lucide-react';
 
 interface NavItem {
@@ -50,7 +49,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex transition-colors">
       {sidebarOpen && (
-        <aside className="w-64 bg-white dark:bg-gray-800 shadow-md flex flex-col fixed md:relative z-40 h-full">
+        <aside className="w-64 bg-white dark:bg-gray-800 shadow-md flex flex-col fixed md:relative z-40 min-h-screen">
           <div className="p-4 border-b dark:border-gray-700 flex items-center justify-between">
             <h2 className="text-lg font-bold text-gray-800 dark:text-white">Sorteo Admin</h2>
             <button onClick={() => setSidebarOpen(false)} title="Cerrar menú"
@@ -101,11 +100,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 {user?.name} <span className="text-xs text-gray-400 dark:text-gray-500">({user?.role})</span>
               </span>
             </div>
-            <button onClick={() => { logout(); navigate('/login'); }} title="Cerrar sesión"
-              className="flex items-center gap-1 text-sm text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">
-              <LogOut size={16} />
-              Salir
-            </button>
+            <div className="flex items-center gap-3">
+              <button onClick={() => setDark(!dark)} title={dark ? 'Modo claro' : 'Modo oscuro'}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                {dark ? <Sun size={18} /> : <Moon size={18} />}
+              </button>
+              <button onClick={() => { logout(); navigate('/login'); }} title="Cerrar sesión"
+                className="flex items-center gap-1 text-sm text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">
+                <LogOut size={16} />
+                Salir
+              </button>
+            </div>
           </div>
         </header>
         <main className="flex-1 p-4 md:p-6 overflow-auto">

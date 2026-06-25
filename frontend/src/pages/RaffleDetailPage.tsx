@@ -44,6 +44,7 @@ export default function RaffleDetailPage() {
   const qrYapeCanvas = useRef<HTMLCanvasElement>(null);
   const qrRegCanvas = useRef<HTMLCanvasElement>(null);
   const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('ALL');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -143,9 +144,11 @@ export default function RaffleDetailPage() {
 
   if (!raffle) return <DashboardLayout><p className="text-gray-500 dark:text-gray-400">Cargando...</p></DashboardLayout>;
 
+  const readonly = !!raffle.winner;
   const confirmedTickets = raffle.tickets.filter((t) => t.status === 'CONFIRMED').length;
   const pendingTickets = raffle.tickets.filter((t) => t.status === 'PENDING').length;
-  const filteredTickets = raffle.tickets.filter((t) =>
+  const filteredByStatus = statusFilter === 'ALL' ? raffle.tickets : raffle.tickets.filter((t) => t.status === statusFilter);
+  const filteredTickets = filteredByStatus.filter((t) =>
     !search || t.participant.name.toLowerCase().includes(search.toLowerCase()) || t.participant.phone.includes(search));
 
   return (
@@ -169,7 +172,7 @@ export default function RaffleDetailPage() {
             </div>
           </div>
           <div className="flex gap-1 items-start">
-            {raffle.status === 'ACTIVE' && (
+            {!readonly && raffle.status === 'ACTIVE' && (
               <>
                 <button onClick={() => setShowRegister(true)} title="Registrar ticket"
                   className="bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700 flex items-center gap-1"><Plus size={16} /> Registrar</button>
@@ -177,10 +180,14 @@ export default function RaffleDetailPage() {
                   className="bg-green-600 text-white px-3 py-2 rounded text-sm hover:bg-green-700 flex items-center gap-1"><Trophy size={16} /> Ganador</button>}
               </>
             )}
-            <button onClick={() => { setEditTitle(raffle.title); setEditDesc(raffle.description || ''); setEditPrice(String(raffle.ticketPrice)); setEditYape(raffle.yapePhone || ''); setEditMax(raffle.maxTickets ? String(raffle.maxTickets) : ''); setShowEdit(true); }} title="Editar sorteo"
-              className="text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 p-1"><Edit3 size={16} /></button>
-            <button onClick={() => setConfirmDel({ type: 'raffle' })} title="Eliminar sorteo"
-              className="text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 p-1"><Trash2 size={16} /></button>
+            {!readonly && (
+              <>
+                <button onClick={() => { setEditTitle(raffle.title); setEditDesc(raffle.description || ''); setEditPrice(String(raffle.ticketPrice)); setEditYape(raffle.yapePhone || ''); setEditMax(raffle.maxTickets ? String(raffle.maxTickets) : ''); setShowEdit(true); }} title="Editar sorteo"
+                  className="text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 p-1"><Edit3 size={16} /></button>
+                <button onClick={() => setConfirmDel({ type: 'raffle' })} title="Eliminar sorteo"
+                  className="text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 p-1"><Trash2 size={16} /></button>
+              </>
+            )}
           </div>
         </div>
 
@@ -226,7 +233,7 @@ export default function RaffleDetailPage() {
 
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
         <div className="p-3 border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex flex-wrap items-center gap-2">
-          <div className="relative flex-1 max-w-xs">
+          <div className="relative max-w-xs">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input value={search} onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar participante..."
@@ -238,7 +245,19 @@ export default function RaffleDetailPage() {
               </button>
             )}
           </div>
-          <span className="text-xs text-gray-500 dark:text-gray-400">{filteredTickets.length} de {raffle.tickets.length} registros</span>
+          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
+            className="border rounded px-3 py-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+            <option value="ALL">Todos</option>
+            <option value="PENDING">Pendientes</option>
+            <option value="CONFIRMED">Confirmados</option>
+          </select>
+          {statusFilter !== 'ALL' && (
+            <button onClick={() => setStatusFilter('ALL')} title="Quitar filtro"
+              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+              <X size={14} />
+            </button>
+          )}
+          <span className="text-xs text-gray-500 dark:text-gray-400">{filteredTickets.length} de {raffle.tickets.length}</span>
           <button onClick={exportExcel} title="Exportar a Excel"
             className="ml-auto bg-green-600 text-white px-3 py-2 rounded text-xs hover:bg-green-700 flex items-center gap-1"><Download size={14} /> Excel</button>
         </div>
@@ -255,12 +274,13 @@ export default function RaffleDetailPage() {
             </tr>
           </thead>
           <tbody>
-            {filteredTickets.map((t) => (
-              <tr key={t.id} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+            {filteredTickets.map((t, i) => (
+              <tr key={t.id}
+                className={`border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/30 ${i % 2 === 0 ? 'bg-gray-50/50 dark:bg-gray-800/20' : ''}`}>
                 <td className="px-4 py-3 font-medium dark:text-white">#{t.ticketNumber}</td>
                 <td className="px-4 py-3 dark:text-gray-200">{t.participant.name}</td>
                 <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{t.participant.phone}</td>
-                <td className="px-4 py-3 dark:text-gray-300">S/.{t.paymentAmount}</td>
+                <td className="px-4 py-3 dark:text-gray-300">S/.{Math.floor(t.paymentAmount)}</td>
                 <td className="px-4 py-3">
                   {t.status === 'CONFIRMED'
                     ? <span className="flex items-center gap-1 text-green-600 dark:text-green-400 text-xs font-medium"><CheckCircle size={14} /> Confirmado</span>
@@ -272,22 +292,22 @@ export default function RaffleDetailPage() {
                   <br /><span className="text-gray-400">{t.registeredBy?.name || 'Auto'}</span>
                 </td>
                 <td className="px-4 py-3">
-                  <div className="flex gap-1 items-center">
-                    {t.status === 'PENDING' && raffle.status === 'ACTIVE' && (
+                  <div className="flex gap-3 items-center">
+                    {!readonly && t.status === 'PENDING' && raffle.status === 'ACTIVE' && (
                       <button onClick={() => handleConfirm(t.id)} title="Confirmar pago"
-                        className="text-green-600 hover:text-green-800 dark:text-green-400 text-xs font-medium flex items-center gap-1"><CheckCircle size={13} /></button>
+                        className="text-green-600 hover:text-green-800 dark:text-green-400 text-xs font-medium flex items-center gap-1"><CheckCircle size={14} /></button>
                     )}
-                    {t.status === 'PENDING' && (
+                    {!readonly && t.status === 'PENDING' && (
                       <button onClick={() => sendNotif('ticket', { ticketId: t.id })} title="Enviar WhatsApp"
-                        className="text-blue-600 hover:text-blue-800 dark:text-blue-400 text-xs flex items-center"><WhatsAppIcon size={14} /></button>
+                        className="text-blue-600 hover:text-blue-800 dark:text-blue-400 text-xs flex items-center"><WhatsAppIcon size={16} /></button>
                     )}
                     {t.status === 'CONFIRMED' && (
                       <button onClick={() => sendNotif('payment-confirmed', { ticketId: t.id })} title="Enviar WhatsApp"
-                        className="text-blue-600 hover:text-blue-800 dark:text-blue-400 text-xs flex items-center"><WhatsAppIcon size={14} /></button>
+                        className="text-blue-600 hover:text-blue-800 dark:text-blue-400 text-xs flex items-center"><WhatsAppIcon size={16} /></button>
                     )}
-                    {hasPermission('raffle.edit') && (
+                    {!readonly && hasPermission('raffle.edit') && (
                       <button onClick={() => setConfirmDel({ type: 'ticket', ticketId: t.id })} title="Eliminar ticket"
-                        className="text-red-400 hover:text-red-600 dark:text-red-400 text-xs flex items-center"><Trash2 size={13} /></button>
+                        className="text-red-400 hover:text-red-600 dark:text-red-400 text-xs flex items-center"><Trash2 size={14} /></button>
                     )}
                   </div>
                 </td>
