@@ -6,6 +6,7 @@ import {
   createUser,
   updateUser,
   deactivateUser,
+  activateUser,
   deleteUser,
   createUserSchema,
   updateUserSchema,
@@ -64,6 +65,15 @@ export async function updateHandler(req: AuthRequest, res: Response) {
 export async function deactivateHandler(req: AuthRequest, res: Response) {
   try {
     const user = await deactivateUser(String(req.params.id));
+    res.json(user);
+  } catch (error) {
+    res.status(400).json({ error: (error as Error).message });
+  }
+}
+
+export async function activateHandler(req: AuthRequest, res: Response) {
+  try {
+    const user = await activateUser(String(req.params.id));
     res.json(user);
   } catch (error) {
     res.status(400).json({ error: (error as Error).message });

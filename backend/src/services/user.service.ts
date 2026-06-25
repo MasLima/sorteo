@@ -133,6 +133,16 @@ export async function deactivateUser(id: string) {
   });
 }
 
+export async function activateUser(id: string) {
+  const user = await prisma.user.findUnique({ where: { id } });
+  if (!user) throw new Error('Usuario no encontrado');
+  return prisma.user.update({
+    where: { id },
+    data: { isActive: true },
+    select: { id: true, isActive: true },
+  });
+}
+
 export async function deleteUser(id: string) {
   const user = await prisma.user.findUnique({
     where: { id },

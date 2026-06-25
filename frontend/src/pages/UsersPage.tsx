@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import api from '../services/api';
 import DashboardLayout from '../components/DashboardLayout';
 import ConfirmModal from '../components/ConfirmModal';
-import { UserPlus, Shield, Ban, Trash2, Pencil, X, Plus, Check } from 'lucide-react';
+import { UserPlus, Shield, Ban, Trash2, Pencil, X, Plus, Check, CheckCircle } from 'lucide-react';
 import FloatingInput from '../components/FloatingInput';
 
 interface User {
@@ -72,7 +72,12 @@ export default function UsersPage() {
   };
 
   const handleDeactivate = async (id: string) => {
-    await api.delete(`/users/${id}`);
+    await api.post(`/users/${id}/deactivate`);
+    loadUsers();
+  };
+
+  const handleActivate = async (id: string) => {
+    await api.post(`/users/${id}/activate`);
     loadUsers();
   };
 
@@ -209,7 +214,12 @@ export default function UsersPage() {
                             className="text-orange-500 hover:text-orange-700 dark:text-orange-400 flex items-center gap-1 text-xs font-medium">
                             <Ban size={14} /> Desactivar
                           </button>
-                        ) : null}
+                        ) : (
+                          <button onClick={() => handleActivate(u.id)} title="Activar"
+                            className="text-green-500 hover:text-green-700 dark:text-green-400 flex items-center gap-1 text-xs font-medium">
+                            <CheckCircle size={14} /> Activar
+                          </button>
+                        )}
                         <button onClick={() => handleDeleteClick(u)} title="Eliminar"
                           className="text-red-400 hover:text-red-600 dark:text-red-400 flex items-center gap-1 text-xs font-medium">
                           <Trash2 size={14} /> Eliminar
