@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import {
-  LayoutDashboard, Users, Shield, Sun, Moon, LogOut, Menu, User, ChevronLeft,
+  LayoutDashboard, Users, Shield, Sun, Moon, LogOut, Menu, User, ChevronLeft, Lock,
 } from 'lucide-react';
+import ChangePasswordModal from './ChangePasswordModal';
 
 interface NavItem {
   label: string;
@@ -18,6 +19,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [dark, setDark] = useState(() => localStorage.getItem('theme') === 'dark');
+  const [showChangePwd, setShowChangePwd] = useState(false);
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', dark);
@@ -102,6 +104,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </span>
             </div>
             <div className="flex items-center gap-3">
+              <button onClick={() => setShowChangePwd(true)} title="Cambiar contraseña"
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                <Lock size={16} />
+              </button>
               <button onClick={() => setDark(!dark)} title={dark ? 'Modo claro' : 'Modo oscuro'}
                 className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
                 {dark ? <Sun size={18} /> : <Moon size={18} />}
@@ -118,6 +124,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {children}
         </main>
       </div>
+
+      <ChangePasswordModal open={showChangePwd} onClose={() => setShowChangePwd(false)} />
     </div>
   );
 }

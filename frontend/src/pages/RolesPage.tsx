@@ -3,6 +3,7 @@ import api from '../services/api';
 import DashboardLayout from '../components/DashboardLayout';
 import ConfirmModal from '../components/ConfirmModal';
 import { Shield, Plus, Trash2, Pencil, X, Check, List } from 'lucide-react';
+import FloatingInput from '../components/FloatingInput';
 
 interface Permission {
   id: string; name: string;
@@ -125,18 +126,17 @@ export default function RolesPage() {
 
       {showCreatePerm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-sm relative">
+            <button onClick={() => setShowCreatePerm(false)} title="Cerrar"
+              className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+              <X size={18} />
+            </button>
             <h2 className="text-lg font-bold mb-4 text-gray-800 dark:text-white">Nuevo Permiso</h2>
             <form onSubmit={handleCreatePermission}>
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-1 dark:text-gray-300">Nombre del permiso</label>
-                <input value={newPermName} onChange={(e) => setNewPermName(e.target.value)}
-                  placeholder="ej: raffle.delete"
-                  className="w-full border rounded px-3 py-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" required />
-              </div>
+              <FloatingInput label="Nombre del permiso" value={newPermName} onChange={setNewPermName} placeholder="ej: raffle.delete" />
               <div className="flex gap-2 justify-end">
                 <button type="button" onClick={() => setShowCreatePerm(false)}
-                  className="px-4 py-2 text-sm border rounded hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 flex items-center gap-1"><X size={14} /> Cancelar</button>
+                  className="px-4 py-2 text-sm border rounded hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 flex items-center gap-1">Cancelar</button>
                 <button type="submit" className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-1"><Plus size={14} /> Crear</button>
               </div>
             </form>
@@ -146,19 +146,15 @@ export default function RolesPage() {
 
       {showCreateRole && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-lg overflow-y-auto max-h-[90vh]">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-lg overflow-y-auto max-h-[90vh] relative">
+            <button onClick={() => setShowCreateRole(false)} title="Cerrar"
+              className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+              <X size={18} />
+            </button>
             <h2 className="text-lg font-bold mb-4 text-gray-800 dark:text-white">Nuevo Rol</h2>
             <form onSubmit={handleCreateRole}>
-              <div className="mb-3">
-                <label className="block text-sm font-medium mb-1 dark:text-gray-300">Nombre del rol</label>
-                <input value={roleName} onChange={(e) => setRoleName(e.target.value)}
-                  className="w-full border rounded px-3 py-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" required />
-              </div>
-              <div className="mb-3">
-                <label className="block text-sm font-medium mb-1 dark:text-gray-300">Descripción</label>
-                <input value={roleDesc} onChange={(e) => setRoleDesc(e.target.value)}
-                  className="w-full border rounded px-3 py-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
-              </div>
+              <FloatingInput label="Nombre del rol" value={roleName} onChange={setRoleName} required />
+              <FloatingInput label="Descripción" value={roleDesc} onChange={setRoleDesc} />
               <div className="mb-4">
                 <label className="block text-sm font-medium mb-2 dark:text-gray-300">Permisos</label>
                 <div className="border dark:border-gray-600 rounded max-h-48 overflow-y-auto p-2 space-y-1">
@@ -176,7 +172,7 @@ export default function RolesPage() {
               {error && <div className="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 p-3 rounded mb-4 text-sm">{error}</div>}
               <div className="flex gap-2 justify-end">
                 <button type="button" onClick={() => setShowCreateRole(false)}
-                  className="px-4 py-2 text-sm border rounded hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 flex items-center gap-1"><X size={14} /> Cancelar</button>
+                  className="px-4 py-2 text-sm border rounded hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 flex items-center gap-1">Cancelar</button>
                 <button type="submit" className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-1"><Plus size={14} /> Crear</button>
               </div>
             </form>
@@ -186,19 +182,15 @@ export default function RolesPage() {
 
       {showEditRole && editRole && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-lg overflow-y-auto max-h-[90vh]">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-lg overflow-y-auto max-h-[90vh] relative">
+            <button onClick={() => { setShowEditRole(false); setEditRole(null); }} title="Cerrar"
+              className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+              <X size={18} />
+            </button>
             <h2 className="text-lg font-bold mb-4 text-gray-800 dark:text-white">Editar Rol</h2>
             <form onSubmit={handleEditRole}>
-              <div className="mb-3">
-                <label className="block text-sm font-medium mb-1 dark:text-gray-300">Nombre del rol</label>
-                <input value={roleName} onChange={(e) => setRoleName(e.target.value)}
-                  className="w-full border rounded px-3 py-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" required />
-              </div>
-              <div className="mb-3">
-                <label className="block text-sm font-medium mb-1 dark:text-gray-300">Descripción</label>
-                <input value={roleDesc} onChange={(e) => setRoleDesc(e.target.value)}
-                  className="w-full border rounded px-3 py-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
-              </div>
+              <FloatingInput label="Nombre del rol" value={roleName} onChange={setRoleName} required />
+              <FloatingInput label="Descripción" value={roleDesc} onChange={setRoleDesc} />
               <div className="mb-4">
                 <label className="block text-sm font-medium mb-2 dark:text-gray-300">Permisos</label>
                 <div className="border dark:border-gray-600 rounded max-h-48 overflow-y-auto p-2 space-y-1">
@@ -215,7 +207,7 @@ export default function RolesPage() {
               {error && <div className="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 p-3 rounded mb-4 text-sm">{error}</div>}
               <div className="flex gap-2 justify-end">
                 <button type="button" onClick={() => { setShowEditRole(false); setEditRole(null); }}
-                  className="px-4 py-2 text-sm border rounded hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 flex items-center gap-1"><X size={14} /> Cancelar</button>
+                  className="px-4 py-2 text-sm border rounded hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 flex items-center gap-1">Cancelar</button>
                 <button type="submit" className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-1"><Check size={14} /> Guardar</button>
               </div>
             </form>

@@ -33,6 +33,9 @@ model User {
   roleId String
   role   Role   @relation(fields: [roleId], references: [id])
 
+  resetPasswordToken  String?
+  resetPasswordExpires DateTime?
+
   createdRaffles Raffle[]
   registeredTickets Ticket[]
   registeredWinners  Winner[]

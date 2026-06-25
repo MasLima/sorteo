@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs';
 import jwt, { SignOptions } from 'jsonwebtoken';
+import crypto from 'crypto';
 import prisma from '../utils/prisma';
 import { JwtPayload } from '../types';
 
@@ -98,4 +99,38 @@ export async function refreshToken(token: string) {
 
 export function verifyToken(token: string): JwtPayload {
   return jwt.verify(token, JWT_SECRET) as JwtPayload;
+}
+
+export async function changePassword(userId: string, currentPassword: string, newPassword: string) {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) throw new Error('Usuario no encontrado');
+  const valid = await bcrypt.compare(currentPassword, user.passwordHash);
+  if (!valid) throw new Error('Contraseña actual incorrecta');
+  const passwordHash = await bcrypt.hash(newPassword, 10);
+  await prisma.user.update({ where: { id: userId }, data: { passwordHash } });
+}
+
+export async function forgotPassword(email: string) {
+  const user = await prisma.user.findUnique({ where: { email } });
+  if (!user) throw new Error('No existe una cuenta con ese email');
+  const token = crypto.randomBytes(32).toString('hex');
+  const expires = new Date(Date.now() + 3600000); // 1 hour
+  await prisma.user.update({
+    where: { email },
+    data: { resetPasswordToken: token, resetPasswordExpires: expires },
+  });
+  // In production, send email here. For now, return token for dev/testing.
+  return { token, email: user.email };
+}
+
+export async function resetPassword(token: string, newPassword: string) {
+  const user = await prisma.user.findFirst({
+    where: { resetPasswordToken: token, resetPasswordExpires: { gte: new Date() } },
+  });
+  if (!user) throw new Error('Token inválido o expirado');
+  const passwordHash = await bcrypt.hash(newPassword, 10);
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { passwordHash, resetPasswordToken: null, resetPasswordExpires: null },
+  });
 }

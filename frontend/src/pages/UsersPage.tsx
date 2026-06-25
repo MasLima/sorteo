@@ -3,6 +3,7 @@ import api from '../services/api';
 import DashboardLayout from '../components/DashboardLayout';
 import ConfirmModal from '../components/ConfirmModal';
 import { UserPlus, Shield, Ban, Trash2, Pencil, X, Plus, Check } from 'lucide-react';
+import FloatingInput from '../components/FloatingInput';
 
 interface User {
   id: string; name: string; email: string; phone: string | null;
@@ -106,29 +107,17 @@ export default function UsersPage() {
 
       {showCreate && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md relative">
+            <button onClick={() => setShowCreate(false)} title="Cerrar"
+              className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+              <X size={18} />
+            </button>
             <h2 className="text-lg font-bold mb-4 text-gray-800 dark:text-white">Crear Usuario</h2>
             <form onSubmit={handleCreate}>
-              <div className="mb-3">
-                <label className="block text-sm font-medium mb-1 dark:text-gray-300">Nombre</label>
-                <input value={name} onChange={(e) => setName(e.target.value)}
-                  className="w-full border rounded px-3 py-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" required />
-              </div>
-              <div className="mb-3">
-                <label className="block text-sm font-medium mb-1 dark:text-gray-300">Email</label>
-                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-                  className="w-full border rounded px-3 py-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" required />
-              </div>
-              <div className="mb-3">
-                <label className="block text-sm font-medium mb-1 dark:text-gray-300">Contraseña</label>
-                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)}
-                  className="w-full border rounded px-3 py-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" required />
-              </div>
-              <div className="mb-3">
-                <label className="block text-sm font-medium mb-1 dark:text-gray-300">Teléfono</label>
-                <input value={phone} onChange={(e) => setPhone(e.target.value)}
-                  className="w-full border rounded px-3 py-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
-              </div>
+              <FloatingInput label="Nombre" value={name} onChange={setName} required />
+              <FloatingInput label="Email" value={email} onChange={setEmail} type="email" required />
+              <FloatingInput label="Contraseña" value={password} onChange={setPassword} type="password" required />
+              <FloatingInput label="Teléfono" value={phone} onChange={setPhone} />
               <div className="mb-4">
                 <label className="block text-sm font-medium mb-1 dark:text-gray-300">Rol</label>
                 <select value={roleId} onChange={(e) => setRoleId(e.target.value)}
@@ -140,7 +129,7 @@ export default function UsersPage() {
               {error && <div className="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 p-3 rounded mb-4 text-sm">{error}</div>}
               <div className="flex gap-2 justify-end">
                 <button type="button" onClick={() => setShowCreate(false)}
-                  className="px-4 py-2 text-sm border rounded hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 flex items-center gap-1"><X size={14} /> Cancelar</button>
+                  className="px-4 py-2 text-sm border rounded hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 flex items-center gap-1">Cancelar</button>
                 <button type="submit" className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-1"><Plus size={14} /> Crear</button>
               </div>
             </form>
@@ -150,24 +139,16 @@ export default function UsersPage() {
 
       {showEdit && editUser && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md relative">
+            <button onClick={() => { setShowEdit(false); setEditUser(null); }} title="Cerrar"
+              className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+              <X size={18} />
+            </button>
             <h2 className="text-lg font-bold mb-4 text-gray-800 dark:text-white">Editar Usuario</h2>
             <form onSubmit={handleEdit}>
-              <div className="mb-3">
-                <label className="block text-sm font-medium mb-1 dark:text-gray-300">Nombre</label>
-                <input value={name} onChange={(e) => setName(e.target.value)}
-                  className="w-full border rounded px-3 py-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" required />
-              </div>
-              <div className="mb-3">
-                <label className="block text-sm font-medium mb-1 dark:text-gray-300">Email</label>
-                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-                  className="w-full border rounded px-3 py-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" required />
-              </div>
-              <div className="mb-3">
-                <label className="block text-sm font-medium mb-1 dark:text-gray-300">Teléfono</label>
-                <input value={phone} onChange={(e) => setPhone(e.target.value)}
-                  className="w-full border rounded px-3 py-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
-              </div>
+              <FloatingInput label="Nombre" value={name} onChange={setName} required />
+              <FloatingInput label="Email" value={email} onChange={setEmail} type="email" required />
+              <FloatingInput label="Teléfono" value={phone} onChange={setPhone} />
               <div className="mb-4">
                 <label className="block text-sm font-medium mb-1 dark:text-gray-300">Rol</label>
                 <select value={roleId} onChange={(e) => setRoleId(e.target.value)}
@@ -179,7 +160,7 @@ export default function UsersPage() {
               {error && <div className="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 p-3 rounded mb-4 text-sm">{error}</div>}
               <div className="flex gap-2 justify-end">
                 <button type="button" onClick={() => { setShowEdit(false); setEditUser(null); }}
-                  className="px-4 py-2 text-sm border rounded hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 flex items-center gap-1"><X size={14} /> Cancelar</button>
+                  className="px-4 py-2 text-sm border rounded hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 flex items-center gap-1">Cancelar</button>
                 <button type="submit" className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-1"><Check size={14} /> Guardar</button>
               </div>
             </form>

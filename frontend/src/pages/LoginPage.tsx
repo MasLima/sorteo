@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { LogIn, Mail, Lock } from 'lucide-react';
+import { LogIn } from 'lucide-react';
+import FloatingInput from '../components/FloatingInput';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -32,21 +33,17 @@ export default function LoginPage() {
         )}
 
         <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
-            <div className="relative">
-              <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-                className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded pl-10 pr-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required />
-            </div>
+          <div className="mb-2">
+            <FloatingInput label="Email" value={email} onChange={setEmail} type="email" required />
           </div>
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Contraseña</label>
-            <div className="relative">
-              <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)}
-                className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded pl-10 pr-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required />
-            </div>
+          <div className="mb-2">
+            <FloatingInput label="Contraseña" value={password} onChange={setPassword} type="password" required />
+          </div>
+          <div className="text-right mb-6">
+            <Link to="/forgot-password"
+              className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400">
+              ¿Olvidaste tu contraseña?
+            </Link>
           </div>
           <button type="submit"
             className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition flex items-center justify-center gap-2">

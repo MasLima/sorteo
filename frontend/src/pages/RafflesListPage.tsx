@@ -5,6 +5,7 @@ import DashboardLayout from '../components/DashboardLayout';
 import ConfirmModal from '../components/ConfirmModal';
 import { Plus, Trash2, Eye, Search, X, CircleCheck, Lock, CircleOff } from 'lucide-react';
 import { formatMoney } from '../utils/format';
+import FloatingInput from '../components/FloatingInput';
 
 interface Raffle {
   id: string; title: string; status: string; ticketPrice: number;
@@ -76,37 +77,23 @@ export default function RafflesListPage() {
 
       {showCreate && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md relative">
+            <button onClick={() => setShowCreate(false)} title="Cerrar"
+              className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+              <X size={18} />
+            </button>
             <h2 className="text-lg font-bold mb-4 text-gray-800 dark:text-white">Crear Sorteo</h2>
             <form onSubmit={handleCreate}>
-              <div className="mb-3">
-                <label className="block text-sm font-medium mb-1 dark:text-gray-300">Título</label>
-                <input value={title} onChange={(e) => setTitle(e.target.value)}
-                  className="w-full border rounded px-3 py-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" required />
-              </div>
-              <div className="mb-3">
-                <label className="block text-sm font-medium mb-1 dark:text-gray-300">Precio del ticket (S/)</label>
-                <input type="number" step="0.01" value={ticketPrice} onChange={(e) => setTicketPrice(e.target.value)}
-                  className="w-full border rounded px-3 py-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" required />
-              </div>
-              <div className="mb-3">
-                <label className="block text-sm font-medium mb-1 dark:text-gray-300">N° Yape (opcional)</label>
-                <input value={yapePhone} onChange={(e) => setYapePhone(e.target.value)}
-                  className="w-full border rounded px-3 py-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" placeholder="51987123456" />
-              </div>
-              <div className="mb-3">
-                <label className="block text-sm font-medium mb-1 dark:text-gray-300">Máx. tickets (opcional)</label>
-                <input type="number" value={maxTickets} onChange={(e) => setMaxTickets(e.target.value)}
-                  className="w-full border rounded px-3 py-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
-              </div>
+              <FloatingInput label="Título" value={title} onChange={setTitle} required />
+              <FloatingInput label="Precio del ticket (S/)" value={ticketPrice} onChange={setTicketPrice} type="number" step="0.01" required />
+              <FloatingInput label="N° Yape (opcional)" value={yapePhone} onChange={setYapePhone} placeholder="51987123456" />
+              <FloatingInput label="Máx. tickets (opcional)" value={maxTickets} onChange={setMaxTickets} type="number" />
               <div className="mb-4">
-                <label className="block text-sm font-medium mb-1 dark:text-gray-300">Descripción (opcional)</label>
-                <textarea value={description} onChange={(e) => setDescription(e.target.value)}
-                  className="w-full border rounded px-3 py-2 text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" rows={3} />
+                <FloatingInput label="Descripción (opcional)" value={description} onChange={setDescription} rows={3} />
               </div>
               <div className="flex gap-2 justify-end">
                 <button type="button" onClick={() => setShowCreate(false)}
-                  className="px-4 py-2 text-sm border rounded hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 flex items-center gap-1"><X size={14} /> Cancelar</button>
+                  className="px-4 py-2 text-sm border rounded hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 flex items-center gap-1">Cancelar</button>
                 <button type="submit" title="Crear sorteo"
                   className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-1"><Plus size={14} /> Crear</button>
               </div>
@@ -162,7 +149,7 @@ export default function RafflesListPage() {
                   </div>
                 </td>
                 <td className="px-4 py-3 dark:text-gray-300">{formatMoney(r.ticketPrice)}</td>
-                <td className="px-4 py-3 dark:text-gray-300">{r.tickets.length}/{r.maxTickets || '∞'}</td>
+                <td className="px-4 py-3 dark:text-gray-300">{r.tickets.length}{r.maxTickets ? `/${r.maxTickets}` : ''}</td>
                 <td className="px-4 py-3 dark:text-gray-300">{r.winner ? `${r.winner.participant.name} (#${r.winner.ticket.ticketNumber})` : '-'}</td>
                 <td className="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">
                   {new Date(r.createdAt).toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' })}
