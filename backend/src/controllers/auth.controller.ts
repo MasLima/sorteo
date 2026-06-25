@@ -60,7 +60,7 @@ export async function forgotPasswordHandler(req: Request, res: Response) {
   try {
     const { email } = z.object({ email: z.string().email() }).parse(req.body);
     const result = await forgotPassword(email);
-    res.json({ message: 'Si el email existe, recibirás instrucciones', ...result });
+    res.json(result);
   } catch (error) {
     res.status(400).json({ error: (error as Error).message });
   }

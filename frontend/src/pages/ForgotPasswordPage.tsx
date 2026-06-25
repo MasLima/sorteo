@@ -2,35 +2,26 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
 import FloatingInput from '../components/FloatingInput';
-import { Mail, ArrowLeft, CheckCircle, Copy } from 'lucide-react';
+import { Mail, ArrowLeft, CheckCircle } from 'lucide-react';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
   const [message, setMessage] = useState('');
-  const [resetLink, setResetLink] = useState('');
-  const [copied, setCopied] = useState(false);
   const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     try {
-      const res = await api.post('/auth/forgot-password', { email });
-      setMessage(res.data.message || 'Revisa tu email');
-      if (res.data.token) {
-        const link = `${window.location.origin}/reset-password?token=${res.data.token}`;
-        setResetLink(link);
-      }
+      await api.post('/auth/forgot-password', { email });
+      setMessage('Revisa tu email para restablecer la contraseña');
       setSent(true);
     } catch (err: any) {
       setError(err.response?.data?.error || 'Error');
     }
   };
 
-  const copyLink = () => {
-    if (resetLink) { navigator.clipboard.writeText(resetLink); setCopied(true); setTimeout(() => setCopied(false), 2000); }
-  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 p-4">
@@ -45,21 +36,7 @@ export default function ForgotPasswordPage() {
               <CheckCircle size={20} className="mt-0.5 shrink-0" />
               <div>
                 <p className="font-medium">{message}</p>
-                {resetLink ? (
-                  <div className="mt-2">
-                    <p className="text-sm mb-1">Usa este enlace para restablecer (solo desarrollo):</p>
-                    <div className="flex items-center gap-1 bg-white dark:bg-gray-700 rounded p-1.5 text-xs">
-                      <code className="flex-1 truncate text-gray-800 dark:text-gray-200">{resetLink}</code>
-                      <button onClick={copyLink} title="Copiar enlace"
-                        className="text-blue-600 hover:text-blue-800 dark:text-blue-400 shrink-0 p-1">
-                        <Copy size={14} />
-                      </button>
-                    </div>
-                    {copied && <span className="text-xs text-green-600">¡Copiado!</span>}
-                  </div>
-                ) : (
-                  <p className="text-sm mt-1">Revisa tu bandeja de entrada (y la carpeta spam).</p>
-                )}
+                <p className="text-sm mt-1">Revisa tu bandeja de entrada (y la carpeta spam).</p>
               </div>
             </div>
             <Link to="/login"

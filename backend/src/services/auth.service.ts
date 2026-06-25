@@ -3,6 +3,7 @@ import jwt, { SignOptions } from 'jsonwebtoken';
 import crypto from 'crypto';
 import prisma from '../utils/prisma';
 import { JwtPayload } from '../types';
+import { sendResetPasswordEmail } from './email.service';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'default-secret';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h';
@@ -114,13 +115,13 @@ export async function forgotPassword(email: string) {
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) throw new Error('No existe una cuenta con ese email');
   const token = crypto.randomBytes(32).toString('hex');
-  const expires = new Date(Date.now() + 3600000); // 1 hour
+  const expires = new Date(Date.now() + 3600000);
   await prisma.user.update({
     where: { email },
     data: { resetPasswordToken: token, resetPasswordExpires: expires },
   });
-  // In production, send email here. For now, return token for dev/testing.
-  return { token, email: user.email };
+  await sendResetPasswordEmail(email, token);
+  return { message: 'Revisa tu email para restablecer la contraseña' };
 }
 
 export async function resetPassword(token: string, newPassword: string) {
