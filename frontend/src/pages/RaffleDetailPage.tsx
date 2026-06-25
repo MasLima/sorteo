@@ -6,6 +6,7 @@ import ConfirmModal from '../components/ConfirmModal';
 import QRCode from 'qrcode';
 import * as XLSX from 'xlsx';
 import { useAuth } from '../contexts/AuthContext';
+import { formatMoney } from '../utils/format';
 import {
   ArrowLeft, Plus, CheckCircle, Clock, X, Edit3, Trash2, Trophy,
   Search, Download,
@@ -164,7 +165,7 @@ export default function RaffleDetailPage() {
             <h1 className="text-2xl font-bold text-gray-800 dark:text-white">{raffle.title}</h1>
             {raffle.description && <p className="text-gray-500 dark:text-gray-400 mt-1">{raffle.description}</p>}
             <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3 text-sm text-gray-600 dark:text-gray-300">
-              <span>Precio: <strong>S/.{raffle.ticketPrice}</strong></span>
+               <span>Precio: <strong>{formatMoney(raffle.ticketPrice)}</strong></span>
               {raffle.yapePhone && <span>Yape: <strong>{raffle.yapePhone}</strong></span>}
               <span>Vendidos: <strong>{confirmedTickets}/{raffle.maxTickets || '∞'}</strong></span>
               <span>Pendientes: <strong>{pendingTickets}</strong></span>
@@ -207,7 +208,7 @@ export default function RaffleDetailPage() {
               </div>
               <div className="text-sm text-gray-500 dark:text-gray-400 pt-6">
                 <p>Yapea al: <strong className="text-gray-800 dark:text-white">{raffle.yapePhone}</strong></p>
-                <p>Monto: <strong className="text-gray-800 dark:text-white">S/.{raffle.ticketPrice}</strong></p>
+                <p>Monto: <strong className="text-gray-800 dark:text-white">{formatMoney(raffle.ticketPrice)}</strong></p>
               </div>
             </div>
           </div>
@@ -280,7 +281,7 @@ export default function RaffleDetailPage() {
                 <td className="px-4 py-3 font-medium dark:text-white">#{t.ticketNumber}</td>
                 <td className="px-4 py-3 dark:text-gray-200">{t.participant.name}</td>
                 <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{t.participant.phone}</td>
-                <td className="px-4 py-3 dark:text-gray-300">S/.{Math.floor(t.paymentAmount)}</td>
+                <td className="px-4 py-3 dark:text-gray-300">{formatMoney(t.paymentAmount)}</td>
                 <td className="px-4 py-3">
                   {t.status === 'CONFIRMED'
                     ? <span className="flex items-center gap-1 text-green-600 dark:text-green-400 text-xs font-medium"><CheckCircle size={14} /> Confirmado</span>

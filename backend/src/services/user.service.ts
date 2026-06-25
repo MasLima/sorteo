@@ -120,11 +120,31 @@ export async function updateUser(id: string, data: z.infer<typeof updateUserSche
 }
 
 export async function deactivateUser(id: string) {
+  const user = await prisma.user.findUnique({
+    where: { id },
+    include: { role: { select: { name: true } } },
+  });
+  if (!user) throw new Error('Usuario no encontrado');
+  if (user.role.name === 'SUPERADMIN') throw new Error('No se puede desactivar SUPERADMIN');
   return prisma.user.update({
     where: { id },
     data: { isActive: false },
     select: { id: true, isActive: true },
   });
+}
+
+export async function deleteUser(id: string) {
+  const user = await prisma.user.findUnique({
+    where: { id },
+    include: { role: { select: { name: true } } },
+  });
+  if (!user) throw new Error('Usuario no encontrado');
+  if (user.role.name === 'SUPERADMIN') throw new Error('No se puede eliminar SUPERADMIN');
+  await prisma.notificationLog.deleteMany({ where: { userId: id } });
+  await prisma.winner.deleteMany({ where: { registeredById: id } });
+  await prisma.ticket.deleteMany({ where: { registeredById: id } });
+  await prisma.raffle.deleteMany({ where: { createdById: id } });
+  return prisma.user.delete({ where: { id } });
 }
 
 export async function listRoles() {

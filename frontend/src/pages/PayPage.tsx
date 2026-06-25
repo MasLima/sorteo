@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import { formatMoney } from '../utils/format';
 
 interface RaffleInfo {
   id: string;
@@ -119,7 +120,7 @@ export default function PayPage() {
             Yapea a: <span className="text-blue-700">{raffle.yapePhone || '—'}</span>
           </p>
           <p className="text-lg font-bold">
-            Monto: <span className="text-blue-700">S/.{raffle.ticketPrice}</span>
+            Monto: <span className="text-blue-700">{formatMoney(raffle.ticketPrice)}</span>
           </p>
         </div>
 

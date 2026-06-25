@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import {
-  LayoutDashboard, Users, Sun, Moon, LogOut, Menu, User, ChevronLeft,
+  LayoutDashboard, Users, Shield, Sun, Moon, LogOut, Menu, User, ChevronLeft,
 } from 'lucide-react';
 
 interface NavItem {
@@ -27,6 +27,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const navItems: NavItem[] = [
     { label: 'Sorteos', path: '/dashboard', icon: <LayoutDashboard size={18} /> },
     { label: 'Usuarios', path: '/dashboard/users', icon: <Users size={18} />, permission: 'user.manage' },
+    { label: 'Roles', path: '/dashboard/roles', icon: <Shield size={18} />, permission: 'user.manage' },
   ];
 
   const visibleItems = navItems.filter(

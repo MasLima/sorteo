@@ -42,10 +42,12 @@ try {
   const raffleRoutes = require('./routes/raffle.routes').default;
   const notificationRoutes = require('./routes/notification.routes').default;
   const publicRoutes = require('./routes/public.routes').default;
+  const roleRoutes = require('./routes/role.routes').default;
   console.log('Modulos cargados OK');
 
   app.use('/api/auth', authRoutes);
   app.use('/api/users', userRoutes);
+  app.use('/api/roles', roleRoutes);
   app.use('/api/raffles', raffleRoutes);
   app.use('/api/notifications', notificationRoutes);
   app.use('/api/public', publicRoutes);

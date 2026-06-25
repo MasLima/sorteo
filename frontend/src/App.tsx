@@ -3,6 +3,7 @@ import LoginPage from './pages/LoginPage';
 import RafflesListPage from './pages/RafflesListPage';
 import RaffleDetailPage from './pages/RaffleDetailPage';
 import UsersPage from './pages/UsersPage';
+import RolesPage from './pages/RolesPage';
 import PayPage from './pages/PayPage';
 
 function App() {
@@ -12,6 +13,7 @@ function App() {
       <Route path="/dashboard" element={<RafflesListPage />} />
       <Route path="/dashboard/raffles/:id" element={<RaffleDetailPage />} />
       <Route path="/dashboard/users" element={<UsersPage />} />
+      <Route path="/dashboard/roles" element={<RolesPage />} />
       <Route path="/pay/:id" element={<PayPage />} />
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>

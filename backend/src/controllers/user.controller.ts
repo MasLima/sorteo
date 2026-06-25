@@ -6,6 +6,7 @@ import {
   createUser,
   updateUser,
   deactivateUser,
+  deleteUser,
   createUserSchema,
   updateUserSchema,
   listRoles,
@@ -64,6 +65,15 @@ export async function deactivateHandler(req: AuthRequest, res: Response) {
   try {
     const user = await deactivateUser(String(req.params.id));
     res.json(user);
+  } catch (error) {
+    res.status(400).json({ error: (error as Error).message });
+  }
+}
+
+export async function deleteHandler(req: AuthRequest, res: Response) {
+  try {
+    await deleteUser(String(req.params.id));
+    res.json({ message: 'Usuario eliminado' });
   } catch (error) {
     res.status(400).json({ error: (error as Error).message });
   }

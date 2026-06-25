@@ -5,6 +5,7 @@ import {
   createHandler,
   updateHandler,
   deactivateHandler,
+  deleteHandler,
   rolesHandler,
 } from '../controllers/user.controller';
 import { authenticate } from '../middleware/authenticate';
@@ -19,6 +20,6 @@ router.get('/roles', requirePermission('user.manage'), rolesHandler);
 router.get('/:id', requirePermission('user.manage'), getByIdHandler);
 router.post('/', requirePermission('user.manage'), createHandler);
 router.patch('/:id', requirePermission('user.manage'), updateHandler);
-router.delete('/:id', requirePermission('user.manage'), deactivateHandler);
+router.delete('/:id', requirePermission('user.manage'), deleteHandler);
 
 export default router;
