@@ -1,4 +1,6 @@
 import { Router } from 'express';
+import multer from 'multer';
+import path from 'path';
 import {
   listHandler,
   getByIdHandler,
@@ -11,8 +13,18 @@ import {
   listTicketsHandler,
   registerWinnerHandler,
 } from '../controllers/raffle.controller';
+import { scanPaymentHandler } from '../controllers/scan.controller';
 import { authenticate } from '../middleware/authenticate';
 import { requirePermission } from '../middleware/requirePermission';
+
+const upload = multer({
+  dest: path.join(__dirname, '../../uploads'),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const allowed = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+    allowed.includes(file.mimetype) ? cb(null, true) : cb(new Error('Formato no soportado'));
+  },
+});
 
 const router = Router();
 
@@ -30,5 +42,7 @@ router.patch('/tickets/:ticketId/confirm', requirePermission('ticket.confirm'), 
 router.delete('/tickets/:ticketId', requirePermission('raffle.edit'), deleteTicketHandler);
 
 router.post('/:id/winner', requirePermission('winner.register'), registerWinnerHandler);
+
+router.post('/:id/scan-payment', requirePermission('ticket.confirm'), upload.single('image'), scanPaymentHandler);
 
 export default router;

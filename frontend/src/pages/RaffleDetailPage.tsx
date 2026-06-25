@@ -10,7 +10,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { formatMoney } from '../utils/format';
 import {
   ArrowLeft, Plus, CheckCircle, Clock, X, Edit3, Trash2, Trophy,
-  Search, Download,
+  Search, Download, ScanLine,
 } from 'lucide-react';
 
 function WhatsAppIcon({ size, className }: { size: number; className?: string }) {
@@ -62,6 +62,10 @@ export default function RaffleDetailPage() {
   const [ticketId, setTicketId] = useState(''); const [prize, setPrize] = useState('');
 
   const [confirmDel, setConfirmDel] = useState<{ type: 'raffle' | 'ticket'; ticketId?: string } | null>(null);
+
+  const [scanning, setScanning] = useState(false);
+  const [scanResult, setScanResult] = useState<{ matched: boolean; autoConfirmed?: boolean; ticketNumber?: number; participant?: string; amount?: number; error?: string; rawText?: string; confidence?: number } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const loadRaffle = async () => {
     try { const res = await api.get(`/raffles/${id}`); setRaffle(res.data); } catch { /* polling */ }
@@ -178,6 +182,16 @@ export default function RaffleDetailPage() {
               <>
                 <button onClick={() => setShowRegister(true)} title="Registrar ticket"
                   className="bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700 flex items-center gap-1"><Plus size={16} /> Registrar</button>
+                <button onClick={() => fileInputRef.current?.click()} title="Escanear comprobante Yape"
+                  className="bg-purple-600 text-white px-3 py-2 rounded text-sm hover:bg-purple-700 flex items-center gap-1" disabled={scanning}><ScanLine size={16} /> {scanning ? 'Escaneando...' : 'Scan'}</button>
+                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                  const file = e.target.files?.[0]; if (!file) return;
+                  setScanning(true); setScanResult(null);
+                  const form = new FormData(); form.append('image', file);
+                  try { const res = await api.post(`/raffles/${id}/scan-payment`, form); setScanResult(res.data); } catch { setScanResult({ matched: false, error: 'Error al procesar la imagen' }); }
+                  setScanning(false);
+                  e.target.value = '';
+                }} />
                 {confirmedTickets > 0 && <button onClick={() => setShowWinner(true)} title="Registrar ganador"
                   className="bg-green-600 text-white px-3 py-2 rounded text-sm hover:bg-green-700 flex items-center gap-1"><Trophy size={16} /> Ganador</button>}
               </>
@@ -400,6 +414,46 @@ export default function RaffleDetailPage() {
                   className="px-4 py-2 text-sm bg-green-600 text-white rounded hover:bg-green-700 flex items-center gap-1"><Trophy size={14} /> Registrar</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {scanResult && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md relative">
+            <button onClick={() => setScanResult(null)} title="Cerrar"
+              className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+              <X size={18} />
+            </button>
+            <h2 className="text-lg font-bold mb-4 text-gray-800 dark:text-white flex items-center gap-2">
+              <ScanLine size={18} /> Resultado del Escaneo
+            </h2>
+            {scanResult.autoConfirmed ? (
+              <div className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 p-4 rounded mb-4">
+                <CheckCircle size={20} className="inline-block mr-1" />
+                Ticket <strong>#{scanResult.ticketNumber}</strong> de <strong>{scanResult.participant}</strong> confirmado automáticamente por <strong>{formatMoney(scanResult.amount!)}</strong>
+              </div>
+            ) : (
+              <div className="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 p-4 rounded mb-4">
+                {scanResult.error || 'No se pudo confirmar automáticamente'}
+              </div>
+            )}
+            {scanResult.amount && (
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Monto detectado: <strong>{formatMoney(scanResult.amount)}</strong></p>
+            )}
+            {scanResult.confidence !== undefined && (
+              <p className="text-xs text-gray-400 mb-1">Confianza: {scanResult.confidence.toFixed(1)}%</p>
+            )}
+            {scanResult.rawText && (
+              <details className="mt-2">
+                <summary className="text-xs text-gray-400 cursor-pointer hover:text-gray-600">Texto extraído</summary>
+                <pre className="text-xs text-gray-500 dark:text-gray-400 mt-1 p-2 bg-gray-50 dark:bg-gray-900 rounded max-h-32 overflow-y-auto whitespace-pre-wrap">{scanResult.rawText}</pre>
+              </details>
+            )}
+            <button onClick={() => { setScanResult(null); loadRaffle(); }}
+              className="mt-4 w-full px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">
+              Cerrar
+            </button>
           </div>
         </div>
       )}
