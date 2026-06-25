@@ -13,7 +13,7 @@ import {
   listTicketsHandler,
   registerWinnerHandler,
 } from '../controllers/raffle.controller';
-import { scanPaymentHandler } from '../controllers/scan.controller';
+import { scanPaymentHandler, matchScanHandler, createFromScanHandler } from '../controllers/scan.controller';
 import { authenticate } from '../middleware/authenticate';
 import { requirePermission } from '../middleware/requirePermission';
 
@@ -44,5 +44,7 @@ router.delete('/tickets/:ticketId', requirePermission('raffle.edit'), deleteTick
 router.post('/:id/winner', requirePermission('winner.register'), registerWinnerHandler);
 
 router.post('/:id/scan-payment', requirePermission('ticket.confirm'), upload.single('image'), scanPaymentHandler);
+router.post('/:id/scan-match', requirePermission('ticket.confirm'), matchScanHandler);
+router.post('/:id/scan-create', requirePermission('ticket.register'), createFromScanHandler);
 
 export default router;

@@ -108,7 +108,10 @@ model Ticket {
   paymentProof  String?
   paymentNote   String?
   registrationSource String?
-  assignedAt    DateTime     @default(now())
+  operationNumber   String?
+  scanRawText       String?
+  scannedAt         DateTime?
+  assignedAt        DateTime     @default(now())
   confirmedAt   DateTime?
 
   raffleId      String

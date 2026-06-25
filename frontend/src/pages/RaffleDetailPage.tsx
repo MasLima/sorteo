@@ -64,11 +64,38 @@ export default function RaffleDetailPage() {
   const [confirmDel, setConfirmDel] = useState<{ type: 'raffle' | 'ticket'; ticketId?: string } | null>(null);
 
   const [scanning, setScanning] = useState(false);
-  const [scanResult, setScanResult] = useState<{ matched: boolean; autoConfirmed?: boolean; ticketNumber?: number; participant?: string; amount?: number; error?: string; rawText?: string; confidence?: number } | null>(null);
+  const [scanResult, setScanResult] = useState<any>(null);
+  const [scanCreate, setScanCreate] = useState(false);
+  const [scanName, setScanName] = useState(''); const [scanPhone, setScanPhone] = useState(''); const [scanEmail, setScanEmail] = useState(''); const [scanAmount, setScanAmount] = useState(''); const [scanError, setScanError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const loadRaffle = async () => {
     try { const res = await api.get(`/raffles/${id}`); setRaffle(res.data); } catch { /* polling */ }
+  };
+
+  const handleScanMatch = async (ticketId: string) => {
+    try {
+      const res = await api.post(`/raffles/${id}/scan-match`, {
+        ticketId, amount: scanResult.amount, date: scanResult.date,
+        time: scanResult.time, operationNumber: scanResult.operationNumber, rawText: scanResult.rawText,
+      });
+      setScanResult({ ...scanResult, ...res.data, autoConfirmed: true });
+    } catch { setScanError('Error al asociar ticket'); }
+  };
+
+  const handleScanCreate = async (e: React.FormEvent) => {
+    e.preventDefault(); setScanError('');
+    try {
+      const res = await api.post(`/raffles/${id}/scan-create`, {
+        participantName: scanName, participantPhone: scanPhone,
+        participantEmail: scanEmail || null, amount: Number(scanAmount),
+        date: scanResult.date, time: scanResult.time,
+        operationNumber: scanResult.operationNumber, rawText: scanResult.rawText,
+      });
+      setScanResult({ ...scanResult, ...res.data, autoConfirmed: true });
+      setScanCreate(false);
+      loadRaffle();
+    } catch (err: any) { setScanError(err.response?.data?.error || 'Error al crear'); }
   };
 
   useEffect(() => { loadRaffle(); }, [id]);
@@ -420,40 +447,94 @@ export default function RaffleDetailPage() {
 
       {scanResult && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md relative">
-            <button onClick={() => setScanResult(null)} title="Cerrar"
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md relative max-h-[90vh] overflow-y-auto">
+            <button onClick={() => { setScanResult(null); setScanCreate(false); }} title="Cerrar"
               className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
               <X size={18} />
             </button>
             <h2 className="text-lg font-bold mb-4 text-gray-800 dark:text-white flex items-center gap-2">
               <ScanLine size={18} /> Resultado del Escaneo
             </h2>
+
             {scanResult.autoConfirmed ? (
-              <div className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 p-4 rounded mb-4">
-                <CheckCircle size={20} className="inline-block mr-1" />
-                Ticket <strong>#{scanResult.ticketNumber}</strong> de <strong>{scanResult.participant}</strong> confirmado automáticamente por <strong>{formatMoney(scanResult.amount!)}</strong>
+              <div className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 p-4 rounded mb-4 flex items-start gap-2">
+                <CheckCircle size={20} className="mt-0.5 shrink-0" />
+                <div>
+                  <p className="font-medium">Ticket #{scanResult.ticketNumber} confirmado</p>
+                  <p className="text-sm">{scanResult.participant} — {formatMoney(scanResult.amount!)}</p>
+                </div>
               </div>
+            ) : scanCreate ? (
+              <form onSubmit={handleScanCreate}>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Crea un nuevo ticket con los datos del comprobante</p>
+                <FloatingInput label="Nombre del participante" value={scanName} onChange={setScanName} required />
+                <FloatingInput label="Teléfono (WhatsApp)" value={scanPhone} onChange={setScanPhone} required placeholder="51987123456" />
+                <FloatingInput label="Email (opcional)" value={scanEmail} onChange={setScanEmail} type="email" />
+                <FloatingInput label="Monto" value={scanAmount} onChange={setScanAmount} type="number" step="0.01" required />
+                {scanResult.operationNumber && (
+                  <p className="text-xs text-gray-400 -mt-2 mb-3">Nro. Operación: {scanResult.operationNumber}</p>
+                )}
+                {scanError && <div className="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 p-3 rounded mb-4 text-sm">{scanError}</div>}
+                <div className="flex gap-2 justify-end">
+                  <button type="button" onClick={() => setScanCreate(false)}
+                    className="px-4 py-2 text-sm border rounded hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700">Cancelar</button>
+                  <button type="submit" className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-1"><Plus size={14} /> Crear Ticket</button>
+                </div>
+              </form>
             ) : (
-              <div className="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 p-4 rounded mb-4">
-                {scanResult.error || 'No se pudo confirmar automáticamente'}
+              <div>
+                {scanResult.error && (
+                  <div className="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 p-3 rounded mb-4 text-sm">{scanResult.error}</div>
+                )}
+
+                <div className="grid grid-cols-2 gap-3 mb-4 text-sm">
+                  {scanResult.amount !== undefined && (
+                    <div><span className="text-gray-400">Monto</span><p className="font-medium dark:text-white">{formatMoney(scanResult.amount)}</p></div>
+                  )}
+                  {scanResult.date && (
+                    <div><span className="text-gray-400">Fecha</span><p className="font-medium dark:text-white">{scanResult.date}</p></div>
+                  )}
+                  {scanResult.time && (
+                    <div><span className="text-gray-400">Hora</span><p className="font-medium dark:text-white">{scanResult.time}</p></div>
+                  )}
+                  {scanResult.operationNumber && (
+                    <div className="col-span-2"><span className="text-gray-400">Nro. Operación</span><p className="font-medium dark:text-white font-mono text-xs">{scanResult.operationNumber}</p></div>
+                  )}
+                  {scanResult.confidence !== undefined && (
+                    <div><span className="text-gray-400">Confianza</span><p className="font-medium dark:text-white">{scanResult.confidence.toFixed(1)}%</p></div>
+                  )}
+                </div>
+
+                {scanResult.candidates?.length > 0 && (
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium mb-2 dark:text-gray-300">Seleccionar ticket</label>
+                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                      {scanResult.candidates.map((c: any) => (
+                        <button key={c.id} onClick={() => handleScanMatch(c.id)}
+                          className="w-full text-left border rounded px-3 py-2 text-sm hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700 dark:text-gray-200 flex justify-between items-center">
+                          <span><strong>#{c.ticketNumber}</strong> — {c.participant.name}</span>
+                          <span className="text-xs text-gray-400">{c.participant.phone}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex gap-2">
+                  <button onClick={() => { setScanCreate(true); setScanAmount(String(scanResult.amount || '')); setScanError(''); }}
+                    className="flex-1 px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center justify-center gap-1"><Plus size={14} /> Nuevo Ticket</button>
+                  <button onClick={() => { setScanResult(null); loadRaffle(); }}
+                    className="px-4 py-2 text-sm border rounded hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700">Cerrar</button>
+                </div>
+
+                {scanResult.rawText && (
+                  <details className="mt-3">
+                    <summary className="text-xs text-gray-400 cursor-pointer hover:text-gray-600">Texto extraído</summary>
+                    <pre className="text-xs text-gray-500 dark:text-gray-400 mt-1 p-2 bg-gray-50 dark:bg-gray-900 rounded max-h-32 overflow-y-auto whitespace-pre-wrap">{scanResult.rawText}</pre>
+                  </details>
+                )}
               </div>
             )}
-            {scanResult.amount && (
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Monto detectado: <strong>{formatMoney(scanResult.amount)}</strong></p>
-            )}
-            {scanResult.confidence !== undefined && (
-              <p className="text-xs text-gray-400 mb-1">Confianza: {scanResult.confidence.toFixed(1)}%</p>
-            )}
-            {scanResult.rawText && (
-              <details className="mt-2">
-                <summary className="text-xs text-gray-400 cursor-pointer hover:text-gray-600">Texto extraído</summary>
-                <pre className="text-xs text-gray-500 dark:text-gray-400 mt-1 p-2 bg-gray-50 dark:bg-gray-900 rounded max-h-32 overflow-y-auto whitespace-pre-wrap">{scanResult.rawText}</pre>
-              </details>
-            )}
-            <button onClick={() => { setScanResult(null); loadRaffle(); }}
-              className="mt-4 w-full px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">
-              Cerrar
-            </button>
           </div>
         </div>
       )}
